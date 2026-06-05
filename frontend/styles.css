@@ -21,3 +21,21 @@ margin: 10px;
 border: none;
 cursor: pointer;
 }
+nav {
+  margin-bottom: 40px;
+}
+
+nav a {
+  color: white;
+  margin-right: 20px;
+  text-decoration: none;
+}
+
+section {
+  margin-top: 50px;
+}
+
+footer {
+  margin-top: 80px;
+  text-align: center;
+}

@@ -1,13 +1,23 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #0f172a;
-  color: white;
-  text-align: center;
-  padding-top: 100px;
+font-family: Arial, sans-serif;
+background: #0f172a;
+color: white;
+max-width: 900px;
+margin: auto;
+padding: 40px;
+}
+
+h1 {
+font-size: 48px;
+}
+
+h2 {
+margin-top: 50px;
 }
 
 button {
-  padding: 12px 20px;
-  margin: 10px;
-  cursor: pointer;
+padding: 12px 20px;
+margin: 10px;
+border: none;
+cursor: pointer;
 }

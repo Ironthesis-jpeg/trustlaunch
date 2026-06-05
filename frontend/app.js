@@ -1,1 +1,1 @@
-
+console.log("TrustLaunch Loaded");

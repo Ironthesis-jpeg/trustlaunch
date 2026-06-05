@@ -14,12 +14,13 @@ font-size: 48px;
 h2 {
 margin-top: 50px;
 }
-
 button {
-padding: 12px 20px;
-margin: 10px;
-border: none;
-cursor: pointer;
+  padding: 12px 20px;
+  margin: 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: bold;
 }
 nav {
   margin-bottom: 40px;

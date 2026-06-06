@@ -1,0 +1,33 @@
+<!DOCTYPE html><html>
+<head>
+  <title>Connect Wallet - TrustLaunch</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body><nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="wallet.html">Wallet</a>
+</nav><h1>Connect Wallet</h1><section>
+  <h2>Wallet Status</h2>
+  <p id="walletStatus">Not Connected</p>
+</section><section>
+  <h2>Supported Wallets</h2>  <ul>
+    <li>MetaMask</li>
+    <li>Coinbase Wallet</li>
+    <li>Rainbow</li>
+    <li>WalletConnect</li>
+  </ul>
+</section><section>
+  <h2>Network</h2>
+  <p>Base Mainnet</p>
+</section><button type="button" onclick="connectWallet()">
+  Connect Wallet
+</button><footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer><script>
+function connectWallet() {
+  document.getElementById("walletStatus").textContent =
+    "Connected (Demo Mode)";
+}
+</script></body>
+</html>

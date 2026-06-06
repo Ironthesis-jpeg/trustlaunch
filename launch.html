@@ -56,6 +56,73 @@
 </footer><script>
 function reviewLaunch() {
 
+  const tokenName =
+    document.getElementById("tokenName").value;
+
+  const tokenSymbol =
+    document.getElementById("tokenSymbol").value;
+
+  const launchType =
+    document.getElementById("launchType").value;
+
+  const totalSupply =
+    Number(document.getElementById("totalSupply").value);
+
+  const creatorFee =
+    document.getElementById("creatorFee").value;
+
+  if (launchType === "Meme") {
+    if (totalSupply < 100000000000 || totalSupply > 1000000000000) {
+      alert("Invalid supply for Meme launch. Allowed range: 100B - 1T");
+      return;
+    }
+  }
+
+  if (launchType === "Safe") {
+    if (totalSupply < 1000000000 || totalSupply > 1000000000000) {
+      alert("Invalid supply for Safe launch. Allowed range: 1B - 1T");
+      return;
+    }
+  }
+
+  if (launchType === "Pro") {
+    if (totalSupply < 100000000 || totalSupply > 100000000000) {
+      alert("Invalid supply for Pro launch. Allowed range: 100M - 100B");
+      return;
+    }
+  }
+
+  localStorage.setItem("tokenName", tokenName);
+  localStorage.setItem("tokenSymbol", tokenSymbol);
+  localStorage.setItem("launchType", launchType);
+  localStorage.setItem("totalSupply", totalSupply);
+  localStorage.setItem("creatorFee", creatorFee);
+
+  window.location.href = "review.html";
+}
+</script></body>
+</html>    <br>
+    Pro: 100M - 100B
+  </p><label>Creator Fee</label>
+<br>
+<select id="creatorFee">
+<option>0%</option>
+<option>1%</option>
+<option>2%</option>
+</select>
+
+  <p>
+    Creator Fee applies only to buys and sells.
+    <br>
+    No fee on transfers.
+  </p>  <button type="button" onclick="reviewLaunch()">
+    Review Launch
+  </button></form><footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer><script>
+function reviewLaunch() {
+
   localStorage.setItem(
     "tokenName",
     document.getElementById("tokenName").value

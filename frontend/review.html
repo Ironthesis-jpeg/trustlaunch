@@ -1,28 +1,36 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
   <title>Review Launch - TrustLaunch</title>
   <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+</head><body><nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="#">Explore</a>
+</nav><h1>Review Launch</h1><p><strong>Token Name:</strong> <span id="reviewTokenName"></span></p><p><strong>Token Symbol:</strong> <span id="reviewTokenSymbol"></span></p><p><strong>Launch Type:</strong> <span id="reviewLaunchType"></span></p><p><strong>Total Supply:</strong> <span id="reviewTotalSupply"></span></p><p><strong>Creator Fee:</strong> <span id="reviewCreatorFee"></span></p><br><a href="launch.html">
+  <button type="button">
+    Back
+  </button>
+</a><button type="button">
+  Launch Token
+</button><footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer><script>
 
-<h1>Review Launch</h1>
+document.getElementById("reviewTokenName").textContent =
+  localStorage.getItem("tokenName");
 
-<p><strong>Token Name:</strong> Example Token</p>
+document.getElementById("reviewTokenSymbol").textContent =
+  localStorage.getItem("tokenSymbol");
 
-<p><strong>Token Symbol:</strong> EXM</p>
+document.getElementById("reviewLaunchType").textContent =
+  localStorage.getItem("launchType");
 
-<p><strong>Launch Type:</strong> Meme</p>
+document.getElementById("reviewTotalSupply").textContent =
+  localStorage.getItem("totalSupply");
 
-<p><strong>Total Supply:</strong> 1000000000</p>
+document.getElementById("reviewCreatorFee").textContent =
+  localStorage.getItem("creatorFee");
 
-<p><strong>Creator Fee:</strong> 0%</p>
-
-<br>
-
-<button>Back</button>
-
-<button>Launch Token</button>
-
-</body>
+</script></body>
 </html>

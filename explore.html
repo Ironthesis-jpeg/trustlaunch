@@ -7,48 +7,86 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-</nav><h1>Explore Projects</h1><section>
-  <h2>Community Launches</h2>  <div id="projectsContainer"></div>
-</section><footer>
+</nav><h1>Explore Projects</h1><section>  <h2>Community Launches</h2><input
+id="searchInput"
+type="text"
+placeholder="Search by token name or symbol"
+onkeyup="renderProjects()"
+
+«»
+
+<br><br>
+
+  <div id="projectsContainer"></div></section><footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer><script>
+
 const projects =
   JSON.parse(localStorage.getItem("projects")) || [];
 
-const container =
-  document.getElementById("projectsContainer");
+function renderProjects() {
 
-if (projects.length === 0) {
+  const container =
+    document.getElementById("projectsContainer");
 
-  container.innerHTML =
-    "<p>No projects launched yet.</p>";
+  const search =
+    document.getElementById("searchInput")
+      .value
+      .toLowerCase();
 
-} else {
+  container.innerHTML = "";
 
-  projects.reverse().forEach(project => {
+  const filteredProjects =
+    projects.filter(project => {
 
-    container.innerHTML += `
-      <div>
-        <h3>🚀 ${project.tokenName}</h3>
+      return (
+        project.tokenName
+          .toLowerCase()
+          .includes(search)
 
-        <p>Symbol: ${project.tokenSymbol}</p>
+        ||
 
-        <p>Launch Type: ${project.launchType}</p>
+        project.tokenSymbol
+          .toLowerCase()
+          .includes(search)
+      );
 
-        <p>Trust Score: ${project.trustScore}</p>
+    });
 
-        <button onclick='viewProject(${JSON.stringify(project)})'>
-          View Project
-        </button>
+  if (filteredProjects.length === 0) {
 
-      </div>
+    container.innerHTML =
+      "<p>No projects found.</p>";
 
-      <hr>
-    `;
+    return;
+  }
 
-  });
+  filteredProjects
+    .slice()
+    .reverse()
+    .forEach(project => {
 
+      container.innerHTML += `
+        <div>
+
+          <h3>🚀 ${project.tokenName}</h3>
+
+          <p>Symbol: ${project.tokenSymbol}</p>
+
+          <p>Launch Type: ${project.launchType}</p>
+
+          <p>Trust Score: ${project.trustScore}</p>
+
+          <button onclick='viewProject(${JSON.stringify(project)})'>
+            View Project
+          </button>
+
+        </div>
+
+        <hr>
+      `;
+    });
 }
 
 function viewProject(project) {
@@ -58,7 +96,11 @@ function viewProject(project) {
     JSON.stringify(project)
   );
 
-  window.location.href = "project.html";
+  window.location.href =
+    "project.html";
 }
+
+renderProjects();
+
 </script></body>
 </html>

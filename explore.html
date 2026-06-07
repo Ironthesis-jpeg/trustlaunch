@@ -8,37 +8,38 @@
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
 </nav><h1>Explore Projects</h1><section>
-  <h2>⭐ Featured Project</h2>  <div>
-    <h3>🚀 TechWiz</h3>
-    <p>Top Trust Score This Week</p>
-    <p>🏆 Trust Score: 100</p>
-    <button>View Project</button>
-  </div>
-</section><section>
-  <h2>Trending Projects</h2>  <div>
-    <h3>🚀 TechWiz</h3>
-    <p>🏆 Trust Score: 100</p>
-    <p>🎭 Launch Type: Meme</p>
-    <p>⭐ Founder Reputation: 95</p>
-    <button>View Project</button>
-  </div>  <div>
-    <h3>🛡️ SafeCoin</h3>
-    <p>🏆 Trust Score: 100</p>
-    <p>🛡️ Launch Type: Safe</p>
-    <p>⭐ Founder Reputation: 98</p>
-    <button>View Project</button>
-  </div>  <div>
-    <h3>⭐ ProBase</h3>
-    <p>🏆 Trust Score: 100</p>
-    <p>⭐ Launch Type: Pro</p>
-    <p>⭐ Founder Reputation: 99</p>
-    <button>View Project</button>
-  </div></section><section>
-  <h2>TrustLaunch Rankings</h2>  <p>#1 TechWiz — Trust Score 100</p>
-  <p>#2 SafeCoin — Trust Score 100</p>
-  <p>#3 ProBase — Trust Score 100</p>
+  <h2>Community Launches</h2>  <div id="projectsContainer"></div>
 </section><footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
-</footer></body>
+</footer><script>
+const projects =
+  JSON.parse(localStorage.getItem("projects")) || [];
+
+const container =
+  document.getElementById("projectsContainer");
+
+if (projects.length === 0) {
+
+  container.innerHTML =
+    "<p>No projects launched yet.</p>";
+
+} else {
+
+  projects.reverse().forEach(project => {
+
+    container.innerHTML += `
+      <div>
+        <h3>🚀 ${project.tokenName}</h3>
+        <p>Symbol: ${project.tokenSymbol}</p>
+        <p>Launch Type: ${project.launchType}</p>
+        <p>Trust Score: ${project.trustScore}</p>
+      </div>
+      <hr>
+    `;
+
+  });
+
+}
+</script></body>
 </html>

@@ -79,6 +79,23 @@ function reviewLaunch() {
   localStorage.setItem("totalSupply", totalSupply);
   localStorage.setItem("creatorFee", creatorFee);
 
+  let projects =
+    JSON.parse(localStorage.getItem("projects")) || [];
+
+  projects.push({
+    tokenName: tokenName,
+    tokenSymbol: tokenSymbol,
+    launchType: launchType,
+    totalSupply: totalSupply,
+    creatorFee: creatorFee,
+    trustScore: 100
+  });
+
+  localStorage.setItem(
+    "projects",
+    JSON.stringify(projects)
+  );
+
   window.location.href = "review.html";
 }
 </script></body>

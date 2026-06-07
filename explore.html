@@ -2,7 +2,8 @@
 <head>
   <title>Explore Projects - TrustLaunch</title>
   <link rel="stylesheet" href="styles.css">
-</head><body><nav>
+</head>
+<body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
@@ -55,32 +56,19 @@ function renderProjects() {
     projects.filter(project => {
 
       const matchesSearch =
-        project.tokenName
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        project.tokenSymbol
-          .toLowerCase()
-          .includes(search);
+        project.tokenName.toLowerCase().includes(search) ||
+        project.tokenSymbol.toLowerCase().includes(search);
 
       const matchesFilter =
-        currentFilter === "All"
-
-        ||
-
+        currentFilter === "All" ||
         project.launchType === currentFilter;
 
       return matchesSearch && matchesFilter;
-
     });
 
   if (filteredProjects.length === 0) {
-
     container.innerHTML =
       "<p>No projects found.</p>";
-
     return;
   }
 
@@ -88,6 +76,11 @@ function renderProjects() {
     .slice()
     .reverse()
     .forEach(project => {
+
+      const launchTime =
+        project.createdAt
+          ? new Date(project.createdAt).toLocaleString()
+          : "Unknown";
 
       container.innerHTML += `
         <div>
@@ -99,6 +92,8 @@ function renderProjects() {
           <p>Launch Type: ${project.launchType}</p>
 
           <p>Trust Score: ${project.trustScore}</p>
+
+          <p>🕒 ${launchTime}</p>
 
           <button onclick='viewProject(${JSON.stringify(project)})'>
             View Project
@@ -118,8 +113,7 @@ function viewProject(project) {
     JSON.stringify(project)
   );
 
-  window.location.href =
-    "project.html";
+  window.location.href = "project.html";
 }
 
 renderProjects();

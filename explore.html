@@ -31,15 +31,34 @@ if (projects.length === 0) {
     container.innerHTML += `
       <div>
         <h3>🚀 ${project.tokenName}</h3>
+
         <p>Symbol: ${project.tokenSymbol}</p>
+
         <p>Launch Type: ${project.launchType}</p>
+
         <p>Trust Score: ${project.trustScore}</p>
+
+        <button onclick='viewProject(${JSON.stringify(project)})'>
+          View Project
+        </button>
+
       </div>
+
       <hr>
     `;
 
   });
 
+}
+
+function viewProject(project) {
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
+  window.location.href = "project.html";
 }
 </script></body>
 </html>

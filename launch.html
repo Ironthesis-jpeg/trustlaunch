@@ -47,29 +47,54 @@
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer><script>
+
 function reviewLaunch() {
 
-  const tokenName = document.getElementById("tokenName").value;
-  const tokenSymbol = document.getElementById("tokenSymbol").value;
-  const launchType = document.getElementById("launchType").value;
-  const totalSupply = Number(document.getElementById("totalSupply").value);
-  const creatorFee = document.getElementById("creatorFee").value;
+  const tokenName =
+    document.getElementById("tokenName").value;
 
-  if (launchType === "Meme" &&
-      (totalSupply < 100000000000 || totalSupply > 1000000000000)) {
-    alert("Invalid supply for Meme launch. Allowed range: 100B - 1T");
+  const tokenSymbol =
+    document.getElementById("tokenSymbol").value;
+
+  const launchType =
+    document.getElementById("launchType").value;
+
+  const totalSupply =
+    Number(document.getElementById("totalSupply").value);
+
+  const creatorFee =
+    document.getElementById("creatorFee").value;
+
+  if (
+    launchType === "Meme" &&
+    (totalSupply < 100000000000 ||
+     totalSupply > 1000000000000)
+  ) {
+    alert(
+      "Invalid supply for Meme launch. Allowed range: 100B - 1T"
+    );
     return;
   }
 
-  if (launchType === "Safe" &&
-      (totalSupply < 1000000000 || totalSupply > 1000000000000)) {
-    alert("Invalid supply for Safe launch. Allowed range: 1B - 1T");
+  if (
+    launchType === "Safe" &&
+    (totalSupply < 1000000000 ||
+     totalSupply > 1000000000000)
+  ) {
+    alert(
+      "Invalid supply for Safe launch. Allowed range: 1B - 1T"
+    );
     return;
   }
 
-  if (launchType === "Pro" &&
-      (totalSupply < 100000000 || totalSupply > 100000000000)) {
-    alert("Invalid supply for Pro launch. Allowed range: 100M - 100B");
+  if (
+    launchType === "Pro" &&
+    (totalSupply < 100000000 ||
+     totalSupply > 100000000000)
+  ) {
+    alert(
+      "Invalid supply for Pro launch. Allowed range: 100M - 100B"
+    );
     return;
   }
 
@@ -88,7 +113,8 @@ function reviewLaunch() {
     launchType: launchType,
     totalSupply: totalSupply,
     creatorFee: creatorFee,
-    trustScore: 100
+    trustScore: 100,
+    createdAt: Date.now()
   });
 
   localStorage.setItem(
@@ -98,5 +124,6 @@ function reviewLaunch() {
 
   window.location.href = "review.html";
 }
+
 </script></body>
 </html>

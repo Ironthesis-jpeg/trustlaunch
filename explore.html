@@ -17,6 +17,13 @@ onkeyup="renderProjects()"
 
 <br><br>
 
+<button onclick="setFilter('All')">All</button>
+<button onclick="setFilter('Meme')">Meme</button>
+<button onclick="setFilter('Safe')">Safe</button>
+<button onclick="setFilter('Pro')">Pro</button>
+
+<br><br>
+
   <div id="projectsContainer"></div></section><footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
@@ -24,6 +31,13 @@ onkeyup="renderProjects()"
 
 const projects =
   JSON.parse(localStorage.getItem("projects")) || [];
+
+let currentFilter = "All";
+
+function setFilter(filter) {
+  currentFilter = filter;
+  renderProjects();
+}
 
 function renderProjects() {
 
@@ -40,7 +54,7 @@ function renderProjects() {
   const filteredProjects =
     projects.filter(project => {
 
-      return (
+      const matchesSearch =
         project.tokenName
           .toLowerCase()
           .includes(search)
@@ -49,8 +63,16 @@ function renderProjects() {
 
         project.tokenSymbol
           .toLowerCase()
-          .includes(search)
-      );
+          .includes(search);
+
+      const matchesFilter =
+        currentFilter === "All"
+
+        ||
+
+        project.launchType === currentFilter;
+
+      return matchesSearch && matchesFilter;
 
     });
 

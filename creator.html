@@ -39,24 +39,13 @@
   </p>
 
   <p>
+    <strong>Founder Level:</strong>
+    <span id="creatorLevel"></span>
+  </p>
+
+  <p>
     <strong>Latest Launch:</strong>
     <span id="latestLaunch"></span>
-  </p>
-
-</section>
-
-<section>
-
-  <h2>Creator Statistics</h2>
-
-  <p>
-    Total Trust Score:
-    <span id="totalTrust"></span>
-  </p>
-
-  <p>
-    Average Trust Score:
-    <span id="avgTrust"></span>
   </p>
 
 </section>
@@ -122,6 +111,25 @@ if (creatorProjects.length >= 25)
 document.getElementById("creatorBadge").textContent =
   badge;
 
+/* Founder Level */
+
+let level = 1;
+
+if (creatorProjects.length >= 3)
+  level = 2;
+
+if (creatorProjects.length >= 5)
+  level = 3;
+
+if (creatorProjects.length >= 10)
+  level = 4;
+
+if (creatorProjects.length >= 25)
+  level = 5;
+
+document.getElementById("creatorLevel").textContent =
+  level;
+
 /* Latest Launch */
 
 if (creatorProjects.length > 0) {
@@ -138,24 +146,7 @@ if (creatorProjects.length > 0) {
 
 }
 
-/* Statistics */
-
-const totalTrust =
-  creatorProjects.reduce(
-    (sum, project) =>
-      sum + Number(project.trustScore || 0),
-    0
-  );
-
-document.getElementById("totalTrust").textContent =
-  totalTrust;
-
-document.getElementById("avgTrust").textContent =
-  creatorProjects.length
-    ? Math.round(totalTrust / creatorProjects.length)
-    : 0;
-
-/* Projects */
+/* Creator Projects */
 
 const container =
   document.getElementById("creatorProjects");
@@ -177,9 +168,6 @@ creatorProjects
         ? new Date(project.createdAt).toLocaleString()
         : "Unknown";
 
-    const projectIndex =
-      projects.indexOf(project);
-
     container.innerHTML += `
       <div>
 
@@ -193,7 +181,7 @@ creatorProjects
 
         <p><strong>Launch Date:</strong> ${launchTime}</p>
 
-        <button onclick="viewProject(${projectIndex})">
+        <button onclick='viewProject(${JSON.stringify(project)})'>
           View Project
         </button>
 
@@ -204,14 +192,11 @@ creatorProjects
 
   });
 
-function viewProject(index) {
-
-  const projects =
-    JSON.parse(localStorage.getItem("projects")) || [];
+function viewProject(project) {
 
   localStorage.setItem(
     "selectedProject",
-    JSON.stringify(projects[index])
+    JSON.stringify(project)
   );
 
   window.location.href =

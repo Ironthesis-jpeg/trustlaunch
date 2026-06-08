@@ -114,7 +114,9 @@ function reviewLaunch() {
     totalSupply: totalSupply,
     creatorFee: creatorFee,
     trustScore: 100,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    creatorWallet:
+      localStorage.getItem("walletAddress")
   });
 
   localStorage.setItem(

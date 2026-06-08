@@ -107,6 +107,14 @@ function reviewLaunch() {
   let projects =
     JSON.parse(localStorage.getItem("projects")) || [];
 
+  const creatorWallet =
+    localStorage.getItem("walletAddress");
+
+  const launchCount =
+    projects.filter(
+      p => p.creatorWallet === creatorWallet
+    ).length + 1;
+
   projects.push({
     tokenName: tokenName,
     tokenSymbol: tokenSymbol,
@@ -115,8 +123,8 @@ function reviewLaunch() {
     creatorFee: creatorFee,
     trustScore: 100,
     createdAt: Date.now(),
-    creatorWallet:
-      localStorage.getItem("walletAddress")
+    creatorWallet: creatorWallet,
+    founderLaunches: launchCount
   });
 
   localStorage.setItem(

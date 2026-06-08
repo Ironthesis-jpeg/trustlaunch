@@ -169,7 +169,7 @@
 
 const projects =
   JSON.parse(localStorage.getItem("projects")) || [];
-
+alert("Projects: " + projects.length);
 document.getElementById("projectsLaunched").textContent =
   projects.length;
 

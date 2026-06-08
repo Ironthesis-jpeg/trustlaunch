@@ -71,6 +71,16 @@
 
 <section>
 
+  <h2>🥇 Top Trusted Projects</h2>
+
+  <div id="topProjects">
+    <p>No projects yet.</p>
+  </div>
+
+</section>
+
+<section>
+
   <h2>Trust Score Example</h2>
 
   <div>
@@ -211,6 +221,84 @@ if (newestProjects.length > 0) {
 
 }
 
+((creator, index) => {
+
+    topCreators.innerHTML += `
+      <p>
+        ${index + 1}. ⭐ ${creator[0]}
+        (${creator[1]} launches)
+      </p>
+    `;
+
+  });
+
+}
+
+/* Top Trusted Projects */
+
+const topProjects =
+  document.getElementById("topProjects");
+
+const rankedProjects =
+  projects
+    .map(project => {
+
+      const launches =
+        projects.filter(p =>
+          p.creatorWallet === project.creatorWallet
+        ).length;
+
+      let reputation =
+        50 + (launches * 10);
+
+      if (reputation > 100) {
+        reputation = 100;
+      }
+
+      const rankScore =
+        project.trustScore +
+        reputation +
+        (launches * 5);
+
+      return {
+        ...project,
+        rankScore,
+        launches,
+        reputation
+      };
+
+    })
+    .sort((a, b) => b.rankScore - a.rankScore)
+    .slice(0, 5);
+
+if (rankedProjects.length > 0) {
+
+  topProjects.innerHTML = "";
+
+  rankedProjects.forEach((project, index) => {
+
+    topProjects.innerHTML += `
+      <div>
+
+        <h3>
+          ${index + 1}. 🏆 ${project.tokenName}
+        </h3>
+
+        <p>Rank Score: ${project.rankScore}</p>
+
+        <p>Trust Score: ${project.trustScore}</p>
+
+        <p>Founder Reputation: ${project.reputation}</p>
+
+        <hr>
+
+      </div>
+    `;
+
+  });
+
+}
+
 /* Top Creators */
 
 const creatorCounts = {};
@@ -241,9 +329,20 @@ if (sortedCreators.length > 0) {
 
   sortedCreators.forEach((creator, index) => {
 
+    let badge = "⭐ Founder";
+
+    if (creator[1] >= 5) {
+      badge = "🏆 Trusted Founder";
+    }
+
+    if (creator[1] >= 10) {
+      badge = "👑 Elite Founder";
+    }
+
     topCreators.innerHTML += `
       <p>
-        ${index + 1}. ⭐ ${creator[0]}
+        ${index + 1}. ${badge}
+        ${creator[0]}
         (${creator[1]} launches)
       </p>
     `;
@@ -251,8 +350,3 @@ if (sortedCreators.length > 0) {
   });
 
 }
-
-</script>
-
-</body>
-</html>

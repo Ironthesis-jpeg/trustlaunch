@@ -7,7 +7,28 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-</nav><h1>Project Details</h1><section>  <p><strong>Token Name:</strong> <span id="tokenName"></span></p>  <p><strong>Token Symbol:</strong> <span id="tokenSymbol"></span></p>  <p><strong>Launch Type:</strong> <span id="launchType"></span></p>  <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>  <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>  <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>  <p>
+</nav><h1>🚀 Project Details</h1><section>  <h2 id="projectTitle">Loading...</h2>  <p>
+    <strong>Token Name:</strong>
+    <span id="tokenName"></span>
+  </p>  <p>
+    <strong>Token Symbol:</strong>
+    <span id="tokenSymbol"></span>
+  </p>  <p>
+    <strong>Launch Type:</strong>
+    <span id="launchType"></span>
+  </p>  <p>
+    <strong>Total Supply:</strong>
+    <span id="totalSupply"></span>
+  </p>  <p>
+    <strong>Creator Fee:</strong>
+    <span id="creatorFee"></span>
+  </p>  <p>
+    <strong>Trust Score:</strong>
+    <span id="trustScore"></span>
+  </p>  <p>
+    <strong>Project Rank Score:</strong>
+    <span id="rankScore"></span>
+  </p>  <p>
     <strong>Creator Wallet:</strong>
     <a href="#" id="creatorWallet"></a>
   </p>  <p>
@@ -17,9 +38,19 @@
     <strong>Founder Reputation:</strong>
     <span id="founderReputation"></span>
   </p>  <p>
+    <strong>Founder Badge:</strong>
+    <span id="founderBadge"></span>
+  </p>  <p>
     <strong>Launch Date:</strong>
     <span id="launchDate"></span>
-  </p>  <p><strong>Status:</strong> Active</p></section><footer>
+  </p>  <p>
+    <strong>Status:</strong>
+    <span>🟢 Active</span>
+  </p></section><section>  <h2>🏆 Trust Summary</h2>  <div id="trustSummary">
+    Loading...
+  </div></section><section>  <button onclick="window.location.href='explore.html'">
+    ← Back To Explore
+  </button></section><footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer><script>
@@ -30,7 +61,15 @@ const project =
 const allProjects =
   JSON.parse(localStorage.getItem("projects")) || [];
 
-if (project) {
+if (!project) {
+
+  document.body.innerHTML +=
+    "<p>Project not found.</p>";
+
+} else {
+
+  document.getElementById("projectTitle").textContent =
+    project.tokenName;
 
   document.getElementById("tokenName").textContent =
     project.tokenName;
@@ -42,7 +81,7 @@ if (project) {
     project.launchType;
 
   document.getElementById("totalSupply").textContent =
-    project.totalSupply;
+    Number(project.totalSupply).toLocaleString();
 
   document.getElementById("creatorFee").textContent =
     project.creatorFee;
@@ -61,9 +100,8 @@ if (project) {
   document.getElementById("founderLaunches").textContent =
     launchesByCreator;
 
-  let reputation = 50;
-
-  reputation += launchesByCreator * 10;
+  let reputation =
+    50 + (launchesByCreator * 10);
 
   if (reputation > 100) {
     reputation = 100;
@@ -71,6 +109,30 @@ if (project) {
 
   document.getElementById("founderReputation").textContent =
     reputation;
+
+  let founderBadge =
+    "⭐ Founder";
+
+  if (launchesByCreator >= 5) {
+    founderBadge =
+      "🏆 Trusted Founder";
+  }
+
+  if (launchesByCreator >= 10) {
+    founderBadge =
+      "👑 Elite Founder";
+  }
+
+  document.getElementById("founderBadge").textContent =
+    founderBadge;
+
+  const rankScore =
+    Number(project.trustScore || 0) +
+    reputation +
+    (launchesByCreator * 5);
+
+  document.getElementById("rankScore").textContent =
+    rankScore;
 
   document.getElementById("launchDate").textContent =
     project.createdAt
@@ -88,7 +150,27 @@ if (project) {
       window.location.href =
         "creator.html";
 
+      return false;
+
     };
+
+  let trustText = "";
+
+  if (rankScore >= 200) {
+    trustText =
+      "🏆 Elite ranked project with strong founder reputation.";
+  }
+  else if (rankScore >= 170) {
+    trustText =
+      "⭐ Trusted project with good launch history.";
+  }
+  else {
+    trustText =
+      "🚀 New project building reputation.";
+  }
+
+  document.getElementById("trustSummary").textContent =
+    trustText;
 
 }
 

@@ -7,7 +7,7 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-</nav><h1>Project Details</h1><section>  <p><strong>Token Name:</strong> <span id="tokenName"></span></p>  <p><strong>Token Symbol:</strong> <span id="tokenSymbol"></span></p>  <p><strong>Launch Type:</strong> <span id="launchType"></span></p>  <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>  <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>  <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>  <p><strong>Creator Wallet:</strong> <span id="creatorWallet"></span></p>  <p><strong>Launch Date:</strong> <span id="launchDate"></span></p>  <p><strong>Founder Reputation:</strong> 95</p>  <p><strong>Status:</strong> Active</p></section><footer>
+</nav><h1>Project Details</h1><section>  <p><strong>Token Name:</strong> <span id="tokenName"></span></p>  <p><strong>Token Symbol:</strong> <span id="tokenSymbol"></span></p>  <p><strong>Launch Type:</strong> <span id="launchType"></span></p>  <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>  <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>  <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>  <p><strong>Creator Wallet:</strong> <span id="creatorWallet"></span></p>  <p><strong>Projects Launched:</strong> <span id="founderLaunches"></span></p>  <p><strong>Launch Date:</strong> <span id="launchDate"></span></p>  <p><strong>Founder Reputation:</strong> 95</p>  <p><strong>Status:</strong> Active</p></section><footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer><script>
@@ -37,6 +37,9 @@ if (project) {
 
   document.getElementById("creatorWallet").textContent =
     project.creatorWallet || "Unknown";
+
+  document.getElementById("founderLaunches").textContent =
+    project.founderLaunches || 1;
 
   document.getElementById("launchDate").textContent =
     project.createdAt

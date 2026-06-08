@@ -2,8 +2,7 @@
 <head>
   <title>Explore Projects - TrustLaunch</title>
   <link rel="stylesheet" href="styles.css">
-</head>
-<body><nav>
+</head><body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
@@ -64,12 +63,16 @@ function renderProjects() {
         project.launchType === currentFilter;
 
       return matchesSearch && matchesFilter;
+
     });
 
   if (filteredProjects.length === 0) {
+
     container.innerHTML =
       "<p>No projects found.</p>";
+
     return;
+
   }
 
   filteredProjects
@@ -82,18 +85,27 @@ function renderProjects() {
           ? new Date(project.createdAt).toLocaleString()
           : "Unknown";
 
+      const creatorProjects =
+        projects.filter(p =>
+          p.creatorWallet === project.creatorWallet
+        ).length;
+
       container.innerHTML += `
         <div>
 
           <h3>🚀 ${project.tokenName}</h3>
 
-          <p>Symbol: ${project.tokenSymbol}</p>
+          <p><strong>Symbol:</strong> ${project.tokenSymbol}</p>
 
-          <p>Launch Type: ${project.launchType}</p>
+          <p><strong>Launch Type:</strong> ${project.launchType}</p>
 
-          <p>Trust Score: ${project.trustScore}</p>
-<p>Creator: ${project.creatorWallet || "Unknown"}</p>
-          <p>🕒 ${launchTime}</p>
+          <p><strong>Trust Score:</strong> ${project.trustScore}</p>
+
+          <p><strong>Creator:</strong> ${project.creatorWallet || "Unknown"}</p>
+
+          <p><strong>Projects Launched:</strong> ${creatorProjects}</p>
+
+          <p><strong>Launch Date:</strong> ${launchTime}</p>
 
           <button onclick='viewProject(${JSON.stringify(project)})'>
             View Project
@@ -103,7 +115,9 @@ function renderProjects() {
 
         <hr>
       `;
+
     });
+
 }
 
 function viewProject(project) {
@@ -113,7 +127,9 @@ function viewProject(project) {
     JSON.stringify(project)
   );
 
-  window.location.href = "project.html";
+  window.location.href =
+    "project.html";
+
 }
 
 renderProjects();

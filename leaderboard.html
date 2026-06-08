@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TrustLaunch Leaderboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+</nav>
+
+<h1>🏆 TrustLaunch Leaderboard</h1>
+
+<section>
+
+  <h2>Top Founders</h2>
+
+  <div id="leaderboard">
+    <p>No founders ranked yet.</p>
+  </div>
+
+</section>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
+<script>
+
+const projects =
+  JSON.parse(localStorage.getItem("projects")) || [];
+
+const leaderboard =
+  document.getElementById("leaderboard");
+
+const founders = {};
+
+projects.forEach(project => {
+
+  if (!project.creatorWallet) return;
+
+  if (!founders[project.creatorWallet]) {
+
+    founders[project.creatorWallet] = {
+      launches: 0,
+      trust: 0
+    };
+
+  }
+
+  founders[project.creatorWallet].launches++;
+
+  founders[project.creatorWallet].trust +=
+    Number(project.trustScore || 0);
+
+});
+
+const rankedFounders =
+  Object.entries(founders)
+    .map(([wallet, stats]) => {
+
+      const reputation =
+        Math.min(
+          100,
+          50 + (stats.launches * 10)
+        );
+
+      const score =
+        stats.trust +
+        reputation +
+        (stats.launches * 5);
+
+      return {
+        wallet,
+        launches: stats.launches,
+        trust: stats.trust,
+        reputation,
+        score
+      };
+
+    })
+    .sort((a, b) => b.score - a.score);
+
+if (rankedFounders.length > 0) {
+
+  leaderboard.innerHTML = "";
+
+  rankedFounders.forEach((founder, index) => {
+
+    let badge = "⭐ Founder";
+
+    if (founder.launches >= 5)
+      badge = "🏆 Trusted Founder";
+
+    if (founder.launches >= 10)
+      badge = "👑 Elite Founder";
+
+    if (founder.launches >= 25)
+      badge = "🔥 Legendary Founder";
+
+    leaderboard.innerHTML += `
+      <div>
+
+        <h3>
+          ${index + 1}. ${badge}
+        </h3>
+
+        <p>
+          <strong>Wallet:</strong>
+          ${founder.wallet}
+        </p>
+
+        <p>
+          <strong>Launches:</strong>
+          ${founder.launches}
+        </p>
+
+        <p>
+          <strong>Trust Points:</strong>
+          ${founder.trust}
+        </p>
+
+        <p>
+          <strong>Reputation:</strong>
+          ${founder.reputation}
+        </p>
+
+        <p>
+          <strong>Leaderboard Score:</strong>
+          ${founder.score}
+        </p>
+
+        <hr>
+
+      </div>
+    `;
+
+  });
+
+}
+
+</script>
+
+</body>
+</html>

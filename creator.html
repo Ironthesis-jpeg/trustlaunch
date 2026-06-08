@@ -1,59 +1,28 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
   <title>Creator Profile - TrustLaunch</title>
   <link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-
-<nav>
+</head><body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-</nav>
-
-<h1>Creator Profile</h1>
-
-<section>
-
-  <p>
+</nav><h1>Creator Profile</h1><section>  <p>
     <strong>Wallet:</strong>
     <span id="walletAddress"></span>
-  </p>
-
-  <p>
+  </p>  <p>
     <strong>Projects Launched:</strong>
     <span id="projectsCount"></span>
-  </p>
-
-  <p>
+  </p>  <p>
     <strong>Founder Reputation:</strong>
     <span id="founderReputation"></span>
-  </p>
-
-  <p>
+  </p>  <p>
     <strong>Latest Launch:</strong>
     <span id="latestLaunch"></span>
-  </p>
-
-</section>
-
-<section>
-
-  <h2>Projects By Creator</h2>
-
-  <div id="creatorProjects"></div>
-
-</section>
-
-<footer>
+  </p></section><section>  <h2>Projects By Creator</h2>  <div id="creatorProjects"></div></section><footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
-</footer>
-
-<script>
+</footer><script>
 
 const creatorWallet =
   localStorage.getItem("selectedCreator");
@@ -72,11 +41,13 @@ document.getElementById("walletAddress").textContent =
 document.getElementById("projectsCount").textContent =
   creatorProjects.length;
 
-let reputation = 60;
+let reputation = 50;
 
-if (creatorProjects.length >= 3) reputation = 75;
-if (creatorProjects.length >= 5) reputation = 85;
-if (creatorProjects.length >= 10) reputation = 100;
+reputation += creatorProjects.length * 10;
+
+if (reputation > 100) {
+  reputation = 100;
+}
 
 document.getElementById("founderReputation").textContent =
   reputation;
@@ -84,7 +55,9 @@ document.getElementById("founderReputation").textContent =
 if (creatorProjects.length > 0) {
 
   const latestProject =
-    creatorProjects[creatorProjects.length - 1];
+    creatorProjects
+      .slice()
+      .sort((a, b) => b.createdAt - a.createdAt)[0];
 
   document.getElementById("latestLaunch").textContent =
     latestProject.createdAt
@@ -96,27 +69,58 @@ if (creatorProjects.length > 0) {
 const container =
   document.getElementById("creatorProjects");
 
-creatorProjects.forEach(project => {
+if (creatorProjects.length === 0) {
 
-  container.innerHTML += `
-    <div>
+  container.innerHTML =
+    "<p>No projects found.</p>";
 
-      <h3>🚀 ${project.tokenName}</h3>
+}
 
-      <p>Symbol: ${project.tokenSymbol}</p>
+creatorProjects
+  .slice()
+  .sort((a, b) => b.createdAt - a.createdAt)
+  .forEach(project => {
 
-      <p>Launch Type: ${project.launchType}</p>
+    const launchTime =
+      project.createdAt
+        ? new Date(project.createdAt).toLocaleString()
+        : "Unknown";
 
-      <p>Trust Score: ${project.trustScore}</p>
+    container.innerHTML += `
+      <div>
 
-      <hr>
+        <h3>🚀 ${project.tokenName}</h3>
 
-    </div>
-  `;
+        <p><strong>Symbol:</strong> ${project.tokenSymbol}</p>
 
-});
+        <p><strong>Launch Type:</strong> ${project.launchType}</p>
 
-</script>
+        <p><strong>Trust Score:</strong> ${project.trustScore}</p>
 
-</body>
+        <p><strong>Launch Date:</strong> ${launchTime}</p>
+
+        <button onclick='viewProject(${JSON.stringify(project)})'>
+          View Project
+        </button>
+
+        <hr>
+
+      </div>
+    `;
+
+  });
+
+function viewProject(project) {
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
+  window.location.href =
+    "project.html";
+
+}
+
+</script></body>
 </html>

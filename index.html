@@ -2,14 +2,7 @@
 <html>
 <head>
   <title>TrustLaunch</title>
-  <style>
-    .project-card, .creator-card {
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -21,95 +14,244 @@
   <a href="wallet.html">Wallet</a>
 </nav>
 
-<!-- 🔥 Featured Projects -->
+<div class="hero">
+  <h1>TrustLaunch</h1>
+
+  <p>Build trust before hype.</p>
+
+  <a href="launch.html">
+    <button>Launch Token</button>
+  </a>
+
+  <a href="explore.html">
+    <button>Explore Projects</button>
+  </a>
+</div>
+
 <section>
+
+  <h2>Platform Stats</h2>
+
+  <p>
+    Projects Launched:
+    <span id="projectsLaunched">0</span>
+  </p>
+
+  <p>
+    Fair Launches:
+    <span id="fairLaunches">0</span>
+  </p>
+
+  <p>
+    Trusted Founders:
+    <span id="trustedFounders">0</span>
+  </p>
+
+</section>
+
+<section>
+
   <h2>🔥 Featured Projects</h2>
+
   <div id="featuredProjects">
     <p>No projects yet.</p>
   </div>
+
 </section>
 
-<!-- 🏆 Top Creators -->
 <section>
+
   <h2>🏆 Top Creators</h2>
+
   <div id="topCreators">
     <p>No creators yet.</p>
   </div>
+
 </section>
 
+<section>
+
+  <h2>Trust Score Example</h2>
+
+  <div>
+    <h3>Wolf Coin</h3>
+
+    <p>Trust Score: 100</p>
+
+    <p>🏆 Fair Launch Certified</p>
+  </div>
+
+</section>
+
+<section>
+
+  <h2>Why TrustLaunch?</h2>
+
+  <ul>
+    <li>Fixed Supply</li>
+    <li>No Minting</li>
+    <li>Founder Allocation = 0%</li>
+    <li>LP Burned Forever</li>
+    <li>Trust Score System</li>
+  </ul>
+
+</section>
+
+<section>
+
+  <h2>Founder Example</h2>
+
+  <div>
+    <p>Founder Wallet: 0x123...abc</p>
+
+    <p>Reputation Score: 95</p>
+
+    <p>⭐ Trusted Founder</p>
+  </div>
+
+</section>
+
+<section>
+
+  <h2>Launch Types</h2>
+
+  <h3>🚀 Meme</h3>
+  <p>Free launch with optional liquidity.</p>
+
+  <h3>🛡️ Safe</h3>
+  <p>15 USDC launch fee with promotion.</p>
+
+  <h3>⭐ Pro</h3>
+  <p>30 USDC launch fee with featured listing.</p>
+
+</section>
+
+<section>
+
+  <h2>TrustLaunch Mission</h2>
+
+  <p>
+    Create the most trusted token launch platform on Base.
+  </p>
+
+</section>
+
+<section>
+
+  <h2>TrustLaunch Standards</h2>
+
+  <ul>
+    <li>✓ Fixed Supply</li>
+    <li>✓ No Mint Function</li>
+    <li>✓ Founder Allocation = 0%</li>
+    <li>✓ Team Allocation = 0%</li>
+    <li>✓ LP Burned Forever</li>
+  </ul>
+
+</section>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
 
-  const creatorCounts = {};
+const projects =
+  JSON.parse(localStorage.getItem("projects")) || [];
 
-  const featuredProjects = document.getElementById("featuredProjects");
-  const topCreators = document.getElementById("topCreators");
+document.getElementById("projectsLaunched").textContent =
+  projects.length;
 
-  // Example fallback (remove if you already have projects defined globally)
-  const projects = window.projects || [];
+document.getElementById("fairLaunches").textContent =
+  projects.length;
 
-  // -----------------------------
-  // FEATURED PROJECTS
-  // -----------------------------
-  function renderFeaturedProjects() {
-    if (!featuredProjects) return;
+const uniqueFounders =
+  new Set(
+    projects
+      .filter(project => project.creatorWallet)
+      .map(project => project.creatorWallet)
+  );
 
-    const newestProjects = projects
-      .slice()
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 3);
+document.getElementById("trustedFounders").textContent =
+  uniqueFounders.size;
 
-    if (newestProjects.length === 0) return;
+/* Featured Projects */
 
-    featuredProjects.innerHTML = "";
+const featuredProjects =
+  document.getElementById("featuredProjects");
 
-    newestProjects.forEach(project => {
-      featuredProjects.innerHTML += `
-        <div class="project-card">
-          <h3>🚀 ${project.tokenName}</h3>
-          <p>Trust Score: ${project.trustScore}</p>
-          <p>Launch Type: ${project.launchType}</p>
-        </div>
-        <hr>
-      `;
-    });
+const newestProjects =
+  projects
+    .slice()
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 3);
+
+if (newestProjects.length > 0) {
+
+  featuredProjects.innerHTML = "";
+
+  newestProjects.forEach(project => {
+
+    featuredProjects.innerHTML += `
+      <div>
+
+        <h3>🚀 ${project.tokenName}</h3>
+
+        <p>Trust Score: ${project.trustScore}</p>
+
+        <p>Launch Type: ${project.launchType}</p>
+
+      </div>
+
+      <hr>
+    `;
+
+  });
+
+}
+
+/* Top Creators */
+
+const creatorCounts = {};
+
+projects.forEach(project => {
+
+  if (!project.creatorWallet) return;
+
+  if (!creatorCounts[project.creatorWallet]) {
+    creatorCounts[project.creatorWallet] = 0;
   }
 
-  // -----------------------------
-  // TOP CREATORS
-  // -----------------------------
-  function renderTopCreators() {
-    if (!topCreators) return;
-
-    topCreators.innerHTML = "";
-
-    const sortedCreators = Object.entries(creatorCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-
-    if (sortedCreators.length === 0) {
-      topCreators.innerHTML = "<p>No creators yet.</p>";
-      return;
-    }
-
-    sortedCreators.forEach(([creator, count]) => {
-      topCreators.innerHTML += `
-        <div class="creator-card">
-          <h3>👤 ${creator}</h3>
-          <p>Projects: ${count}</p>
-        </div>
-        <hr>
-      `;
-    });
-  }
-
-  // -----------------------------
-  // INIT
-  // -----------------------------
-  renderFeaturedProjects();
-  renderTopCreators();
+  creatorCounts[project.creatorWallet]++;
 
 });
+
+const sortedCreators =
+  Object.entries(creatorCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+const topCreators =
+  document.getElementById("topCreators");
+
+if (sortedCreators.length > 0) {
+
+  topCreators.innerHTML = "";
+
+  sortedCreators.forEach((creator, index) => {
+
+    topCreators.innerHTML += `
+      <p>
+        ${index + 1}. ⭐ ${creator[0]}
+        (${creator[1]} launches)
+      </p>
+    `;
+
+  });
+
+}
+
 </script>
 
 </body>

@@ -1,1 +1,122 @@
-creator.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Creator Profile - TrustLaunch</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+</nav>
+
+<h1>Creator Profile</h1>
+
+<section>
+
+  <p>
+    <strong>Wallet:</strong>
+    <span id="walletAddress"></span>
+  </p>
+
+  <p>
+    <strong>Projects Launched:</strong>
+    <span id="projectsCount"></span>
+  </p>
+
+  <p>
+    <strong>Founder Reputation:</strong>
+    <span id="founderReputation"></span>
+  </p>
+
+  <p>
+    <strong>Latest Launch:</strong>
+    <span id="latestLaunch"></span>
+  </p>
+
+</section>
+
+<section>
+
+  <h2>Projects By Creator</h2>
+
+  <div id="creatorProjects"></div>
+
+</section>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
+<script>
+
+const creatorWallet =
+  localStorage.getItem("selectedCreator");
+
+const projects =
+  JSON.parse(localStorage.getItem("projects")) || [];
+
+const creatorProjects =
+  projects.filter(project =>
+    project.creatorWallet === creatorWallet
+  );
+
+document.getElementById("walletAddress").textContent =
+  creatorWallet || "Unknown";
+
+document.getElementById("projectsCount").textContent =
+  creatorProjects.length;
+
+let reputation = 60;
+
+if (creatorProjects.length >= 3) reputation = 75;
+if (creatorProjects.length >= 5) reputation = 85;
+if (creatorProjects.length >= 10) reputation = 100;
+
+document.getElementById("founderReputation").textContent =
+  reputation;
+
+if (creatorProjects.length > 0) {
+
+  const latestProject =
+    creatorProjects[creatorProjects.length - 1];
+
+  document.getElementById("latestLaunch").textContent =
+    latestProject.createdAt
+      ? new Date(latestProject.createdAt).toLocaleString()
+      : "Unknown";
+
+}
+
+const container =
+  document.getElementById("creatorProjects");
+
+creatorProjects.forEach(project => {
+
+  container.innerHTML += `
+    <div>
+
+      <h3>🚀 ${project.tokenName}</h3>
+
+      <p>Symbol: ${project.tokenSymbol}</p>
+
+      <p>Launch Type: ${project.launchType}</p>
+
+      <p>Trust Score: ${project.trustScore}</p>
+
+      <hr>
+
+    </div>
+  `;
+
+});
+
+</script>
+
+</body>
+</html>

@@ -1,28 +1,64 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
   <title>Creator Profile - TrustLaunch</title>
   <link rel="stylesheet" href="styles.css">
-</head><body><nav>
+</head>
+
+<body>
+
+<nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-</nav><h1>Creator Profile</h1><section>  <p>
+</nav>
+
+<h1>Creator Profile</h1>
+
+<section>
+
+  <p>
     <strong>Wallet:</strong>
     <span id="walletAddress"></span>
-  </p>  <p>
+  </p>
+
+  <p>
     <strong>Projects Launched:</strong>
     <span id="projectsCount"></span>
-  </p>  <p>
+  </p>
+
+  <p>
     <strong>Founder Reputation:</strong>
     <span id="founderReputation"></span>
-  </p>  <p>
+  </p>
+
+  <p>
+    <strong>Badge:</strong>
+    <span id="creatorBadge"></span>
+  </p>
+
+  <p>
     <strong>Latest Launch:</strong>
     <span id="latestLaunch"></span>
-  </p></section><section>  <h2>Projects By Creator</h2>  <div id="creatorProjects"></div></section><footer>
+  </p>
+
+</section>
+
+<section>
+
+  <h2>Projects By Creator</h2>
+
+  <div id="creatorProjects"></div>
+
+</section>
+
+<footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
-</footer><script>
+</footer>
+
+<script>
 
 const creatorWallet =
   localStorage.getItem("selectedCreator");
@@ -51,6 +87,20 @@ if (reputation > 100) {
 
 document.getElementById("founderReputation").textContent =
   reputation;
+
+let badge = "⭐ New Founder";
+
+if (creatorProjects.length >= 5)
+  badge = "🏆 Trusted Founder";
+
+if (creatorProjects.length >= 10)
+  badge = "👑 Elite Founder";
+
+if (creatorProjects.length >= 25)
+  badge = "🔥 Legendary Founder";
+
+document.getElementById("creatorBadge").textContent =
+  badge;
 
 if (creatorProjects.length > 0) {
 
@@ -122,5 +172,7 @@ function viewProject(project) {
 
 }
 
-</script></body>
+</script>
+
+</body>
 </html>

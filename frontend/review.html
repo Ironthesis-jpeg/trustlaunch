@@ -5,26 +5,21 @@
 </head><body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
-  <a href="#">Explore</a>
-</nav><h1>Review Launch</h1><section>
-  <h2>Launch Summary</h2>  <p><strong>Token Name:</strong> <span id="reviewTokenName"></span></p>  <p><strong>Token Symbol:</strong> <span id="reviewTokenSymbol"></span></p>  <p><strong>Launch Type:</strong> <span id="reviewLaunchType"></span></p>  <p><strong>Total Supply:</strong> <span id="reviewTotalSupply"></span></p>  <p><strong>Creator Fee:</strong> <span id="reviewCreatorFee"></span></p>
-</section><section>
-  <h2>Trust Score</h2>  <p><strong>Score:</strong> 100</p>  <ul>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+</nav><h1>Review Launch</h1><section>  <h2>Launch Summary</h2>  <p><strong>Token Name:</strong> <span id="reviewTokenName"></span></p>  <p><strong>Token Symbol:</strong> <span id="reviewTokenSymbol"></span></p>  <p><strong>Launch Type:</strong> <span id="reviewLaunchType"></span></p>  <p><strong>Total Supply:</strong> <span id="reviewTotalSupply"></span></p>  <p><strong>Creator Fee:</strong> <span id="reviewCreatorFee"></span></p>  <p><strong>Creator Wallet:</strong> <span id="reviewCreatorWallet"></span></p>  <p><strong>Review Date:</strong> <span id="reviewDate"></span></p></section><section>  <h2>Trust Score</h2>  <p><strong>Score:</strong> 100</p>  <ul>
     <li>✓ Fixed Supply</li>
     <li>✓ No Mint Function</li>
     <li>✓ Founder Allocation = 0%</li>
     <li>✓ Team Allocation = 0%</li>
     <li>✓ LP Burned Forever</li>
     <li>✓ Creator Fee on trades only</li>
-  </ul>
-</section><section>
-  <h2>Launch Rules</h2>  <ul>
+  </ul></section><section>  <h2>Launch Rules</h2>  <ul>
     <li>Supply rules validated</li>
     <li>Fair launch principles enforced</li>
     <li>Founder allocation disabled</li>
     <li>Trust score visible to investors</li>
-  </ul>
-</section><br><a href="launch.html">
+  </ul></section><br><a href="launch.html">
   <button type="button">
     Back
   </button>
@@ -36,6 +31,7 @@
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer><script>
+
 document.getElementById("reviewTokenName").textContent =
   localStorage.getItem("tokenName");
 
@@ -50,5 +46,12 @@ document.getElementById("reviewTotalSupply").textContent =
 
 document.getElementById("reviewCreatorFee").textContent =
   localStorage.getItem("creatorFee");
+
+document.getElementById("reviewCreatorWallet").textContent =
+  localStorage.getItem("walletAddress") || "Not Connected";
+
+document.getElementById("reviewDate").textContent =
+  new Date().toLocaleString();
+
 </script></body>
 </html>

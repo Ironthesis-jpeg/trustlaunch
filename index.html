@@ -1,49 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TrustLaunch</title>
+  <style>
+    .project-card, .creator-card {
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+</nav>
+
+<!-- 🔥 Featured Projects -->
+<section>
+  <h2>🔥 Featured Projects</h2>
+  <div id="featuredProjects">
+    <p>No projects yet.</p>
+  </div>
+</section>
+
+<!-- 🏆 Top Creators -->
 <section>
   <h2>🏆 Top Creators</h2>
   <div id="topCreators">
     <p>No creators yet.</p>
   </div>
-</section>with:
+</section>
 
-<section>  <h2>🔥 Featured Projects</h2>  <div id="featuredProjects">
-    <p>No projects yet.</p>
-  </div></section><section>  <h2>🏆 Top Creators</h2>  <div id="topCreators">
-    <p>No creators yet.</p>
-  </div></section>Then add this JavaScript ABOVE:
+<script>
+document.addEventListener("DOMContentLoaded", () => {
 
-const creatorCounts = {};
+  const creatorCounts = {};
 
-Add:
+  const featuredProjects = document.getElementById("featuredProjects");
+  const topCreators = document.getElementById("topCreators");
 
-const featuredProjects =
-document.getElementById("featuredProjects");
+  // Example fallback (remove if you already have projects defined globally)
+  const projects = window.projects || [];
 
-const newestProjects =
-projects
-.slice()
-.sort((a, b) => b.createdAt - a.createdAt)
-.slice(0, 3);
+  // -----------------------------
+  // FEATURED PROJECTS
+  // -----------------------------
+  function renderFeaturedProjects() {
+    if (!featuredProjects) return;
 
-if (newestProjects.length > 0) {
+    const newestProjects = projects
+      .slice()
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 3);
 
-featuredProjects.innerHTML = "";
+    if (newestProjects.length === 0) return;
 
-newestProjects.forEach(project => {
+    featuredProjects.innerHTML = "";
 
-featuredProjects.innerHTML += `
-  <div>
+    newestProjects.forEach(project => {
+      featuredProjects.innerHTML += `
+        <div class="project-card">
+          <h3>🚀 ${project.tokenName}</h3>
+          <p>Trust Score: ${project.trustScore}</p>
+          <p>Launch Type: ${project.launchType}</p>
+        </div>
+        <hr>
+      `;
+    });
+  }
 
-    <h3>🚀 ${project.tokenName}</h3>
+  // -----------------------------
+  // TOP CREATORS
+  // -----------------------------
+  function renderTopCreators() {
+    if (!topCreators) return;
 
-    <p>Trust Score: ${project.trustScore}</p>
+    topCreators.innerHTML = "";
 
-    <p>Launch Type: ${project.launchType}</p>
+    const sortedCreators = Object.entries(creatorCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
 
-  </div>
+    if (sortedCreators.length === 0) {
+      topCreators.innerHTML = "<p>No creators yet.</p>";
+      return;
+    }
 
-  <hr>
-`;
+    sortedCreators.forEach(([creator, count]) => {
+      topCreators.innerHTML += `
+        <div class="creator-card">
+          <h3>👤 ${creator}</h3>
+          <p>Projects: ${count}</p>
+        </div>
+        <hr>
+      `;
+    });
+  }
+
+  // -----------------------------
+  // INIT
+  // -----------------------------
+  renderFeaturedProjects();
+  renderTopCreators();
 
 });
+</script>
 
-}
+</body>
+</html>

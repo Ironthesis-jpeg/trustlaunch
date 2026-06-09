@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>My Watchlist - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
+  <a href="trending.html">Trending</a>
+  <a href="notifications.html">Notifications</a>
+  <a href="watchlist.html">Watchlist</a>
+</nav>
+
+<h1>⭐ My Watchlist</h1>
+
+<section>
+
+<h2>Saved Projects</h2>
+
+<div id="watchlistContainer">
+
+<p>No saved projects.</p>
+
+</div>
+
+</section>
+
+<footer>
+<p>TrustLaunch</p>
+<p>Build trust before hype.</p>
+</footer>
+
+<script>
+
+const watchlist =
+JSON.parse(
+localStorage.getItem(
+"watchlist"
+)
+) || [];
+
+const container =
+document.getElementById(
+"watchlistContainer"
+);
+
+if(watchlist.length){
+
+container.innerHTML = "";
+
+watchlist.forEach(project => {
+
+container.innerHTML += `
+
+<div>
+
+<h3>
+🚀 ${project.tokenName}
+</h3>
+
+<p>
+Symbol:
+${project.tokenSymbol}
+</p>
+
+<p>
+Trust Score:
+${project.trustScore}
+</p>
+
+<button
+onclick='viewProject(
+${JSON.stringify(project)}
+)'
+>
+View Project
+</button>
+
+<button
+onclick='removeProject(
+"${project.tokenSymbol}"
+)'
+>
+❌ Remove
+</button>
+
+<hr>
+
+</div>
+
+`;
+
+});
+
+}
+
+function viewProject(project){
+
+localStorage.setItem(
+"selectedProject",
+JSON.stringify(project)
+);
+
+window.location.href =
+"project.html";
+
+}
+
+function removeProject(symbol){
+
+let updated =
+watchlist.filter(
+p =>
+p.tokenSymbol !== symbol
+);
+
+localStorage.setItem(
+"watchlist",
+JSON.stringify(updated)
+);
+
+location.reload();
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Trending Projects - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
+  <a href="trending.html">Trending</a>
+</nav>
+
+<h1>🔥 Trending Projects</h1>
+
+<section>
+
+  <h2>📈 Trending Now</h2>
+
+  <div id="trendingNow">
+    <p>No trending projects yet.</p>
+  </div>
+
+</section>
+
+<section>
+
+  <h2>❤️ Most Liked</h2>
+
+  <div id="mostLiked">
+    <p>No liked projects yet.</p>
+  </div>
+
+</section>
+
+<section>
+
+  <h2>👀 Most Viewed</h2>
+
+  <div id="mostViewed">
+    <p>No viewed projects yet.</p>
+  </div>
+
+</section>
+
+<section>
+
+  <h2>⭐ Highest Rated</h2>
+
+  <div id="highestRated">
+    <p>No ratings yet.</p>
+  </div>
+
+</section>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
+<script>
+
+const projects =
+  JSON.parse(
+    localStorage.getItem("projects")
+  ) || [];
+
+/* Build Stats */
+
+const scoredProjects =
+  projects.map(project => {
+
+    const likes =
+      Number(
+        localStorage.getItem(
+          "likes_" +
+          project.tokenSymbol
+        ) || 0
+      );
+
+    const views =
+      Number(
+        localStorage.getItem(
+          "views_" +
+          project.tokenSymbol
+        ) || 0
+      );
+
+    const ratings =
+      JSON.parse(
+        localStorage.getItem(
+          "ratings_" +
+          project.tokenSymbol
+        ) || "[]"
+      );
+
+    const avgRating =
+      ratings.length
+      ?
+      ratings.reduce(
+        (a,b) => a + b,
+        0
+      ) / ratings.length
+      :
+      0;
+
+    const trendingScore =
+      likes * 5 +
+      views +
+      avgRating * 20 +
+      Number(project.trustScore || 0);
+
+    return {
+      ...project,
+      likes,
+      views,
+      avgRating,
+      trendingScore
+    };
+
+  });
+
+/* Trending Now */
+
+const trendingNow =
+  scoredProjects
+    .slice()
+    .sort(
+      (a,b) =>
+      b.trendingScore -
+      a.trendingScore
+    )
+    .slice(0,10);
+
+const trendingContainer =
+  document.getElementById(
+    "trendingNow"
+  );
+
+if(trendingNow.length){
+
+  trendingContainer.innerHTML = "";
+
+  trendingNow.forEach(
+    (project,index) => {
+
+      trendingContainer.innerHTML += `
+
+      <div>
+
+        <h3>
+          #${index + 1}
+          🔥 ${project.tokenName}
+        </h3>
+
+        <p>
+          Trending Score:
+          ${project.trendingScore.toFixed(0)}
+        </p>
+
+        <p>
+          Likes:
+          ${project.likes}
+        </p>
+
+        <p>
+          Views:
+          ${project.views}
+        </p>
+
+        <button
+          onclick='viewProject(
+            ${JSON.stringify(project)}
+          )'
+        >
+          View Project
+        </button>
+
+        <hr>
+
+      </div>
+
+      `;
+
+    });
+
+}
+
+/* Most Liked */
+
+const likedContainer =
+  document.getElementById(
+    "mostLiked"
+  );
+
+const likedProjects =
+  scoredProjects
+    .slice()
+    .sort(
+      (a,b) =>
+      b.likes - a.likes
+    )
+    .slice(0,5);
+
+if(likedProjects.length){
+
+  likedContainer.innerHTML = "";
+
+  likedProjects.forEach(project => {
+
+    likedContainer.innerHTML += `
+
+      <p>
+        ❤️ ${project.tokenName}
+        (${project.likes} likes)
+      </p>
+
+    `;
+
+  });
+
+}
+
+/* Most Viewed */
+
+const viewedContainer =
+  document.getElementById(
+    "mostViewed"
+  );
+
+const viewedProjects =
+  scoredProjects
+    .slice()
+    .sort(
+      (a,b) =>
+      b.views - a.views
+    )
+    .slice(0,5);
+
+if(viewedProjects.length){
+
+  viewedContainer.innerHTML = "";
+
+  viewedProjects.forEach(project => {
+
+    viewedContainer.innerHTML += `
+
+      <p>
+        👀 ${project.tokenName}
+        (${project.views} views)
+      </p>
+
+    `;
+
+  });
+
+}
+
+/* Highest Rated */
+
+const ratedContainer =
+  document.getElementById(
+    "highestRated"
+  );
+
+const ratedProjects =
+  scoredProjects
+    .filter(
+      p => p.avgRating > 0
+    )
+    .sort(
+      (a,b) =>
+      b.avgRating -
+      a.avgRating
+    )
+    .slice(0,5);
+
+if(ratedProjects.length){
+
+  ratedContainer.innerHTML = "";
+
+  ratedProjects.forEach(project => {
+
+    ratedContainer.innerHTML += `
+
+      <p>
+        ⭐ ${project.tokenName}
+        (${project.avgRating.toFixed(1)})
+      </p>
+
+    `;
+
+  });
+
+}
+
+function viewProject(project){
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
+  window.location.href =
+    "project.html";
+
+}
+
+</script>
+
+</body>
+</html>

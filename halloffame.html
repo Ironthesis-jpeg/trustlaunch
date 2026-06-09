@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Hall of Fame - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
+</nav>
+
+<h1>🏛️ TrustLaunch Hall of Fame</h1>
+
+<section>
+
+  <h2>🌟 Greatest Projects Of All Time</h2>
+
+  <p>
+    The highest-ranked projects in TrustLaunch history.
+  </p>
+
+  <div id="hallOfFame">
+
+    <p>No projects have entered the Hall of Fame yet.</p>
+
+  </div>
+
+</section>
+
+<section>
+
+  <h2>👑 Legendary Founders</h2>
+
+  <div id="legendaryFounders">
+
+    <p>No legendary founders yet.</p>
+
+  </div>
+
+</section>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
+<script>
+
+const projects =
+  JSON.parse(
+    localStorage.getItem("projects")
+  ) || [];
+
+const hallOfFame =
+  document.getElementById(
+    "hallOfFame"
+  );
+
+const legendaryFounders =
+  document.getElementById(
+    "legendaryFounders"
+  );
+
+/* Rank Projects */
+
+const rankedProjects =
+  projects
+    .map(project => {
+
+      const launches =
+        projects.filter(
+          p =>
+          p.creatorWallet ===
+          project.creatorWallet
+        ).length;
+
+      const reputation =
+        Math.min(
+          100,
+          50 + launches * 10
+        );
+
+      const likes =
+        Number(
+          localStorage.getItem(
+            "likes_" +
+            project.tokenSymbol
+          ) || 0
+        );
+
+      const views =
+        Number(
+          localStorage.getItem(
+            "views_" +
+            project.tokenSymbol
+          ) || 0
+        );
+
+      const ratings =
+        JSON.parse(
+          localStorage.getItem(
+            "ratings_" +
+            project.tokenSymbol
+          ) || "[]"
+        );
+
+      const avgRating =
+        ratings.length
+        ?
+        ratings.reduce(
+          (a,b) => a + b,
+          0
+        ) / ratings.length
+        :
+        0;
+
+      const score =
+        Number(project.trustScore || 0) +
+        reputation +
+        (launches * 5) +
+        likes +
+        views +
+        (avgRating * 10);
+
+      return {
+        ...project,
+        score,
+        reputation,
+        launches,
+        likes,
+        views,
+        avgRating
+      };
+
+    })
+    .sort(
+      (a,b) =>
+      b.score - a.score
+    )
+    .slice(0,10);
+
+if (
+  rankedProjects.length > 0
+) {
+
+  hallOfFame.innerHTML = "";
+
+  rankedProjects.forEach(
+    (project,index) => {
+
+      let medal = "🏅";
+
+      if (index === 0)
+        medal = "🥇";
+
+      if (index === 1)
+        medal = "🥈";
+
+      if (index === 2)
+        medal = "🥉";
+
+      hallOfFame.innerHTML += `
+
+        <div>
+
+          <h3>
+            ${medal}
+            ${project.tokenName}
+          </h3>
+
+          <p>
+            <strong>Symbol:</strong>
+            ${project.tokenSymbol}
+          </p>
+
+          <p>
+            <strong>Rank Score:</strong>
+            ${project.score.toFixed(0)}
+          </p>
+
+          <p>
+            <strong>Trust Score:</strong>
+            ${project.trustScore}
+          </p>
+
+          <p>
+            <strong>Founder Reputation:</strong>
+            ${project.reputation}
+          </p>
+
+          <p>
+            <strong>Likes:</strong>
+            ${project.likes}
+          </p>
+
+          <p>
+            <strong>Views:</strong>
+            ${project.views}
+          </p>
+
+          <p>
+            <strong>Rating:</strong>
+            ${project.avgRating.toFixed(1)}
+          </p>
+
+          <button
+            onclick='viewProject(
+              ${JSON.stringify(project)}
+            )'
+          >
+            View Project
+          </button>
+
+          <hr>
+
+        </div>
+
+      `;
+
+    });
+
+}
+
+/* Legendary Founders */
+
+const founderStats = {};
+
+projects.forEach(project => {
+
+  if (!project.creatorWallet)
+    return;
+
+  if (
+    !founderStats[
+      project.creatorWallet
+    ]
+  ) {
+
+    founderStats[
+      project.creatorWallet
+    ] = {
+
+      launches: 0,
+      trust: 0
+
+    };
+
+  }
+
+  founderStats[
+    project.creatorWallet
+  ].launches++;
+
+  founderStats[
+    project.creatorWallet
+  ].trust +=
+    Number(
+      project.trustScore || 0
+    );
+
+});
+
+const founders =
+  Object.entries(
+    founderStats
+  )
+  .map(([wallet,data]) => {
+
+    const reputation =
+      Math.min(
+        100,
+        50 + (
+          data.launches * 10
+        )
+      );
+
+    const score =
+      data.trust +
+      reputation +
+      (
+        data.launches * 5
+      );
+
+    return {
+
+      wallet,
+      launches:
+        data.launches,
+      reputation,
+      score
+
+    };
+
+  })
+  .sort(
+    (a,b) =>
+    b.score - a.score
+  )
+  .slice(0,10);
+
+if (
+  founders.length > 0
+) {
+
+  legendaryFounders.innerHTML =
+    "";
+
+  founders.forEach(
+    (founder,index) => {
+
+      let badge =
+        "⭐ Founder";
+
+      if (
+        founder.launches >= 5
+      )
+        badge =
+        "🏆 Trusted Founder";
+
+      if (
+        founder.launches >= 10
+      )
+        badge =
+        "👑 Elite Founder";
+
+      if (
+        founder.launches >= 25
+      )
+        badge =
+        "🔥 Legendary Founder";
+
+      legendaryFounders.innerHTML += `
+
+        <div>
+
+          <h3>
+            #${index + 1}
+            ${badge}
+          </h3>
+
+          <p>
+            <strong>Wallet:</strong>
+            ${founder.wallet}
+          </p>
+
+          <p>
+            <strong>Launches:</strong>
+            ${founder.launches}
+          </p>
+
+          <p>
+            <strong>Reputation:</strong>
+            ${founder.reputation}
+          </p>
+
+          <p>
+            <strong>Hall Score:</strong>
+            ${founder.score}
+          </p>
+
+          <hr>
+
+        </div>
+
+      `;
+
+    });
+
+}
+
+function viewProject(project) {
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
+  window.location.href =
+    "project.html";
+
+}
+
+</script>
+
+</body>
+</html>

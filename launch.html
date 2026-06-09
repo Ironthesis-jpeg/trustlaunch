@@ -1,144 +1,246 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
-  <title>Launch Token - TrustLaunch</title>
-  <link rel="stylesheet" href="styles.css">
-</head><body><nav>
+<meta charset="UTF-8">
+<title>Launch Token - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="leaderboard.html">Leaderboard</a>
-</nav><h1>Launch Token</h1><form><label>Token Name</label><br>
-<input id="tokenName" type="text" placeholder="Wolf Coin">
-<br><br>
+  <a href="halloffame.html">Hall of Fame</a>
+</nav>
 
-<label>Token Symbol</label><br>
-<input id="tokenSymbol" type="text" placeholder="WOLF">
-<br><br>
+<h1>🚀 Launch Token</h1>
 
-<label>Launch Type</label><br>
-<select id="launchType">
-<option>Meme</option>
-<option>Safe</option>
-<option>Pro</option>
-</select>
-<br><br>
+<form>
 
-<label>Total Supply</label><br>
-<input id="totalSupply" type="number" placeholder="1000000000">
-<br>
+  <label>Token Name</label><br>
+  <input
+    id="tokenName"
+    type="text"
+    placeholder="Wolf Coin"
+  >
+  <br><br>
+
+  <label>Token Symbol</label><br>
+  <input
+    id="tokenSymbol"
+    type="text"
+    placeholder="WOLF"
+  >
+  <br><br>
+
+  <label>Launch Type</label><br>
+  <select id="launchType">
+    <option>Meme</option>
+    <option>Safe</option>
+    <option>Pro</option>
+  </select>
+  <br><br>
+
+  <label>Project Category</label><br>
+  <select id="category">
+    <option>Meme</option>
+    <option>AI</option>
+    <option>Gaming</option>
+    <option>DeFi</option>
+    <option>NFT</option>
+    <option>Utility</option>
+    <option>Social</option>
+    <option>Infrastructure</option>
+  </select>
+  <br><br>
+
+  <label>Total Supply</label><br>
+  <input
+    id="totalSupply"
+    type="number"
+    placeholder="1000000000"
+  >
+  <br>
 
   <p>
     Meme: 100B - 1T<br>
     Safe: 1B - 1T<br>
     Pro: 100M - 100B
-  </p><label>Creator Fee</label><br>
-<select id="creatorFee">
-<option>0%</option>
-<option>1%</option>
-<option>2%</option>
-</select>
+  </p>
+
+  <label>Creator Fee</label><br>
+  <select id="creatorFee">
+    <option>0%</option>
+    <option>1%</option>
+    <option>2%</option>
+  </select>
 
   <p>
     Creator Fee applies only to buys and sells.<br>
     No fee on transfers.
-  </p>  <button type="button" onclick="reviewLaunch()">
-    Review Launch
-  </button></form><footer>
+  </p>
+
+  <button
+    type="button"
+    onclick="launchProject()"
+  >
+    Launch Project
+  </button>
+
+</form>
+
+<footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
-</footer><script>
+</footer>
 
-function reviewLaunch() {
+<script>
+
+function launchProject() {
 
   const tokenName =
-    document.getElementById("tokenName").value;
+    document.getElementById("tokenName").value.trim();
 
   const tokenSymbol =
-    document.getElementById("tokenSymbol").value;
+    document.getElementById("tokenSymbol").value.trim();
 
   const launchType =
     document.getElementById("launchType").value;
 
+  const category =
+    document.getElementById("category").value;
+
   const totalSupply =
-    Number(document.getElementById("totalSupply").value);
+    Number(
+      document.getElementById("totalSupply").value
+    );
 
   const creatorFee =
     document.getElementById("creatorFee").value;
 
+  if (!tokenName || !tokenSymbol) {
+
+    alert(
+      "Please enter token name and symbol."
+    );
+
+    return;
+
+  }
+
   if (
     launchType === "Meme" &&
-    (totalSupply < 100000000000 ||
-     totalSupply > 1000000000000)
+    (
+      totalSupply < 100000000000 ||
+      totalSupply > 1000000000000
+    )
   ) {
+
     alert(
       "Invalid supply for Meme launch. Allowed range: 100B - 1T"
     );
+
     return;
+
   }
 
   if (
     launchType === "Safe" &&
-    (totalSupply < 1000000000 ||
-     totalSupply > 1000000000000)
+    (
+      totalSupply < 1000000000 ||
+      totalSupply > 1000000000000
+    )
   ) {
+
     alert(
       "Invalid supply for Safe launch. Allowed range: 1B - 1T"
     );
+
     return;
+
   }
 
   if (
     launchType === "Pro" &&
-    (totalSupply < 100000000 ||
-     totalSupply > 100000000000)
+    (
+      totalSupply < 100000000 ||
+      totalSupply > 100000000000
+    )
   ) {
+
     alert(
       "Invalid supply for Pro launch. Allowed range: 100M - 100B"
     );
+
     return;
+
   }
 
-  localStorage.setItem("tokenName", tokenName);
-  localStorage.setItem("tokenSymbol", tokenSymbol);
-  localStorage.setItem("launchType", launchType);
-  localStorage.setItem("totalSupply", totalSupply);
-  localStorage.setItem("creatorFee", creatorFee);
+  const creatorWallet =
+    localStorage.getItem("walletAddress") ||
+    "Unknown";
 
   let projects =
-    JSON.parse(localStorage.getItem("projects")) || [];
+    JSON.parse(
+      localStorage.getItem("projects")
+    ) || [];
 
-  const creatorWallet =
-    localStorage.getItem("walletAddress");
-
-  const launchCount =
+  const founderLaunches =
     projects.filter(
       p => p.creatorWallet === creatorWallet
     ).length + 1;
 
-  projects.push({
-  tokenName: tokenName,
-  tokenSymbol: tokenSymbol,
-  launchType: launchType,
-  totalSupply: totalSupply,
-  creatorFee: creatorFee,
-  trustScore: 100,
-  createdAt: Date.now(),
-  creatorWallet: creatorWallet,
-  founderLaunches: launchCount,
+  const project = {
 
-  views: 0,
-  likes: 0,
-  verified: false
-});
+    tokenName,
+    tokenSymbol,
+    launchType,
+    category,
+
+    totalSupply,
+    creatorFee,
+
+    trustScore: 100,
+
+    views: 0,
+    likes: 0,
+
+    ratings: [],
+    comments: [],
+
+    creatorWallet,
+    founderLaunches,
+
+    createdAt: Date.now()
+
+  };
+
+  projects.push(project);
 
   localStorage.setItem(
     "projects",
     JSON.stringify(projects)
   );
 
-  window.location.href = "review.html";
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
+  alert(
+    "🚀 Project launched successfully!"
+  );
+
+  window.location.href =
+    "project.html";
+
 }
 
-</script></body>
+</script>
+
+</body>
 </html>

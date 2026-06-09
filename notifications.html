@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Notifications - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
+  <a href="trending.html">Trending</a>
+  <a href="notifications.html">Notifications</a>
+</nav>
+
+<h1>🔔 Notifications Center</h1>
+
+<section>
+
+  <h2>Recent Activity</h2>
+
+  <button onclick="clearNotifications()">
+    Clear All Notifications
+  </button>
+
+  <br><br>
+
+  <div id="notificationsContainer">
+
+    <p>No notifications yet.</p>
+
+  </div>
+
+</section>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
+<script>
+
+let notifications =
+  JSON.parse(
+    localStorage.getItem(
+      "notifications"
+    )
+  ) || [];
+
+const container =
+  document.getElementById(
+    "notificationsContainer"
+  );
+
+function renderNotifications() {
+
+  if (
+    notifications.length === 0
+  ) {
+
+    container.innerHTML =
+      "<p>No notifications yet.</p>";
+
+    return;
+
+  }
+
+  container.innerHTML = "";
+
+  notifications
+    .slice()
+    .reverse()
+    .forEach(notification => {
+
+      container.innerHTML += `
+
+        <div>
+
+          <p>
+            ${notification.message}
+          </p>
+
+          <small>
+            ${notification.time}
+          </small>
+
+          <hr>
+
+        </div>
+
+      `;
+
+    });
+
+}
+
+function clearNotifications() {
+
+  localStorage.removeItem(
+    "notifications"
+  );
+
+  notifications = [];
+
+  renderNotifications();
+
+}
+
+renderNotifications();
+
+</script>
+
+</body>
+</html>

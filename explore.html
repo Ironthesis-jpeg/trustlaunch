@@ -1,74 +1,257 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
-  <title>Explore Projects - TrustLaunch</title>
-  <link rel="stylesheet" href="styles.css">
-</head><body><nav>
+<meta charset="UTF-8">
+<title>Explore Projects - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
 </nav>
-</nav><h1>Explore Projects</h1><section>  <h2>Community Launches</h2><input
-id="searchInput"
-type="text"
-placeholder="Search by token name or symbol"
-onkeyup="renderProjects()"
 
-«»
+<h1>🚀 Explore Projects</h1>
 
-<br><br>
+<section>
 
-<button onclick="setFilter('All')">All</button>
-<button onclick="setFilter('Meme')">Meme</button>
-<button onclick="setFilter('Safe')">Safe</button>
-<button onclick="setFilter('Pro')">Pro</button>
+  <h2>Community Launches</h2>
 
-<br><br>
+  <input
+    id="searchInput"
+    type="text"
+    placeholder="Search token name or symbol"
+    onkeyup="renderProjects()"
+  >
 
-  <div id="projectsContainer"></div></section><footer>
+  <br><br>
+
+  <button onclick="setFilter('All')">All</button>
+  <button onclick="setFilter('Meme')">Meme</button>
+  <button onclick="setFilter('Safe')">Safe</button>
+  <button onclick="setFilter('Pro')">Pro</button>
+
+  <br><br>
+
+  <select id="sortSelect" onchange="renderProjects()">
+    <option value="newest">Newest</option>
+    <option value="trust">Highest Trust Score</option>
+    <option value="rank">Highest Rank Score</option>
+    <option value="likes">Most Likes</option>
+    <option value="views">Most Views</option>
+  </select>
+
+  <br><br>
+
+  <div id="projectsContainer">
+    <p>No projects found.</p>
+  </div>
+
+</section>
+
+<footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
-</footer><script>
+</footer>
+
+<script>
 
 const projects =
-  JSON.parse(localStorage.getItem("projects")) || [];
+  JSON.parse(
+    localStorage.getItem("projects")
+  ) || [];
 
 let currentFilter = "All";
 
 function setFilter(filter) {
+
   currentFilter = filter;
+
   renderProjects();
+
+}
+
+function calculateRank(project) {
+
+  const launches =
+    projects.filter(
+      p =>
+      p.creatorWallet ===
+      project.creatorWallet
+    ).length;
+
+  const reputation =
+    Math.min(
+      100,
+      50 + launches * 10
+    );
+
+  const likes =
+    Number(
+      localStorage.getItem(
+        "likes_" +
+        project.tokenSymbol
+      ) || 0
+    );
+
+  const views =
+    Number(
+      localStorage.getItem(
+        "views_" +
+        project.tokenSymbol
+      ) || 0
+    );
+
+  return (
+    Number(project.trustScore || 0) +
+    reputation +
+    (launches * 5) +
+    likes +
+    views
+  );
+
 }
 
 function renderProjects() {
 
   const container =
-    document.getElementById("projectsContainer");
+    document.getElementById(
+      "projectsContainer"
+    );
 
   const search =
-    document.getElementById("searchInput")
+    document
+      .getElementById(
+        "searchInput"
+      )
       .value
       .toLowerCase();
 
+  const sortType =
+    document.getElementById(
+      "sortSelect"
+    ).value;
+
   container.innerHTML = "";
 
-  const filteredProjects =
+  let filteredProjects =
     projects.filter(project => {
 
       const matchesSearch =
-        project.tokenName.toLowerCase().includes(search) ||
-        project.tokenSymbol.toLowerCase().includes(search);
+
+        project.tokenName
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        project.tokenSymbol
+          .toLowerCase()
+          .includes(search);
 
       const matchesFilter =
-        currentFilter === "All" ||
-        project.launchType === currentFilter;
 
-      return matchesSearch && matchesFilter;
+        currentFilter === "All"
+
+        ||
+
+        project.launchType ===
+        currentFilter;
+
+      return (
+        matchesSearch &&
+        matchesFilter
+      );
 
     });
 
-  if (filteredProjects.length === 0) {
+  if (sortType === "newest") {
+
+    filteredProjects.sort(
+      (a,b) =>
+        b.createdAt -
+        a.createdAt
+    );
+
+  }
+
+  if (sortType === "trust") {
+
+    filteredProjects.sort(
+      (a,b) =>
+        Number(b.trustScore || 0) -
+        Number(a.trustScore || 0)
+    );
+
+  }
+
+  if (sortType === "rank") {
+
+    filteredProjects.sort(
+      (a,b) =>
+        calculateRank(b) -
+        calculateRank(a)
+    );
+
+  }
+
+  if (sortType === "likes") {
+
+    filteredProjects.sort(
+      (a,b) =>
+
+        Number(
+          localStorage.getItem(
+            "likes_" +
+            b.tokenSymbol
+          ) || 0
+        )
+
+        -
+
+        Number(
+          localStorage.getItem(
+            "likes_" +
+            a.tokenSymbol
+          ) || 0
+        )
+    );
+
+  }
+
+  if (sortType === "views") {
+
+    filteredProjects.sort(
+      (a,b) =>
+
+        Number(
+          localStorage.getItem(
+            "views_" +
+            b.tokenSymbol
+          ) || 0
+        )
+
+        -
+
+        Number(
+          localStorage.getItem(
+            "views_" +
+            a.tokenSymbol
+          ) || 0
+        )
+    );
+
+  }
+
+  if (
+    filteredProjects.length === 0
+  ) {
 
     container.innerHTML =
       "<p>No projects found.</p>";
@@ -77,48 +260,122 @@ function renderProjects() {
 
   }
 
-  filteredProjects
-    .slice()
-    .reverse()
-    .forEach(project => {
+  filteredProjects.forEach(project => {
 
-      const launchTime =
+    const launchTime =
+
+      project.createdAt
+
+      ?
+
+      new Date(
         project.createdAt
-          ? new Date(project.createdAt).toLocaleString()
-          : "Unknown";
+      ).toLocaleString()
 
-      const creatorProjects =
-        projects.filter(p =>
-          p.creatorWallet === project.creatorWallet
-        ).length;
+      :
 
-      container.innerHTML += `
-        <div>
+      "Unknown";
 
-          <h3>🚀 ${project.tokenName}</h3>
+    const launches =
 
-          <p><strong>Symbol:</strong> ${project.tokenSymbol}</p>
+      projects.filter(
+        p =>
+        p.creatorWallet ===
+        project.creatorWallet
+      ).length;
 
-          <p><strong>Launch Type:</strong> ${project.launchType}</p>
+    const likes =
+      Number(
+        localStorage.getItem(
+          "likes_" +
+          project.tokenSymbol
+        ) || 0
+      );
 
-          <p><strong>Trust Score:</strong> ${project.trustScore}</p>
+    const views =
+      Number(
+        localStorage.getItem(
+          "views_" +
+          project.tokenSymbol
+        ) || 0
+      );
 
-          <p><strong>Creator:</strong> ${project.creatorWallet || "Unknown"}</p>
+    const rankScore =
+      calculateRank(project);
 
-          <p><strong>Projects Launched:</strong> ${creatorProjects}</p>
+    let badge =
+      "🚀 New";
 
-          <p><strong>Launch Date:</strong> ${launchTime}</p>
+    if (rankScore >= 170)
+      badge = "⭐ Trusted";
 
-          <button onclick='viewProject(${JSON.stringify(project)})'>
-            View Project
-          </button>
+    if (rankScore >= 200)
+      badge = "🏆 Elite";
 
-        </div>
+    container.innerHTML += `
+
+      <div>
+
+        <h3>
+          ${badge}
+          ${project.tokenName}
+        </h3>
+
+        <p>
+          <strong>Symbol:</strong>
+          ${project.tokenSymbol}
+        </p>
+
+        <p>
+          <strong>Launch Type:</strong>
+          ${project.launchType}
+        </p>
+
+        <p>
+          <strong>Trust Score:</strong>
+          ${project.trustScore}
+        </p>
+
+        <p>
+          <strong>Rank Score:</strong>
+          ${rankScore}
+        </p>
+
+        <p>
+          <strong>Likes:</strong>
+          ${likes}
+        </p>
+
+        <p>
+          <strong>Views:</strong>
+          ${views}
+        </p>
+
+        <p>
+          <strong>Founder Launches:</strong>
+          ${launches}
+        </p>
+
+        <p>
+          <strong>Launch Date:</strong>
+          ${launchTime}
+        </p>
+
+        <button
+          onclick='viewProject(
+            ${JSON.stringify(project)}
+          )'
+        >
+          View Project
+        </button>
 
         <hr>
-      `;
 
-    });
+      </div>
+
+    `;
+
+  });
 
 }
 
@@ -136,5 +393,7 @@ function viewProject(project) {
 
 renderProjects();
 
-</script></body>
+</script>
+
+</body>
 </html>

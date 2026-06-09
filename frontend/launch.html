@@ -117,16 +117,20 @@ function reviewLaunch() {
     ).length + 1;
 
   projects.push({
-    tokenName: tokenName,
-    tokenSymbol: tokenSymbol,
-    launchType: launchType,
-    totalSupply: totalSupply,
-    creatorFee: creatorFee,
-    trustScore: 100,
-    createdAt: Date.now(),
-    creatorWallet: creatorWallet,
-    founderLaunches: launchCount
-  });
+  tokenName: tokenName,
+  tokenSymbol: tokenSymbol,
+  launchType: launchType,
+  totalSupply: totalSupply,
+  creatorFee: creatorFee,
+  trustScore: 100,
+  createdAt: Date.now(),
+  creatorWallet: creatorWallet,
+  founderLaunches: launchCount,
+
+  views: 0,
+  likes: 0,
+  verified: false
+});
 
   localStorage.setItem(
     "projects",

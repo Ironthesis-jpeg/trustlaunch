@@ -21,75 +21,104 @@
 
 <form>
 
-  <label>Token Name</label><br>
-  <input
-    id="tokenName"
-    type="text"
-    placeholder="Wolf Coin"
-  >
-  <br><br>
+<label>Token Name</label><br>
+<input
+  id="tokenName"
+  type="text"
+  placeholder="Wolf Coin"
+>
+<br><br>
 
-  <label>Token Symbol</label><br>
-  <input
-    id="tokenSymbol"
-    type="text"
-    placeholder="WOLF"
-  >
-  <br><br>
+<label>Token Symbol</label><br>
+<input
+  id="tokenSymbol"
+  type="text"
+  placeholder="WOLF"
+>
+<br><br>
 
-  <label>Launch Type</label><br>
-  <select id="launchType">
-    <option>Meme</option>
-    <option>Safe</option>
-    <option>Pro</option>
-  </select>
-  <br><br>
+<label>Project Description</label><br>
+<textarea
+  id="projectDescription"
+  placeholder="Describe your project..."
+></textarea>
+<br><br>
 
-  <label>Project Category</label><br>
-  <select id="category">
-    <option>Meme</option>
-    <option>AI</option>
-    <option>Gaming</option>
-    <option>DeFi</option>
-    <option>NFT</option>
-    <option>Utility</option>
-    <option>Social</option>
-    <option>Infrastructure</option>
-  </select>
-  <br><br>
+<label>Website</label><br>
+<input
+  id="projectWebsite"
+  type="text"
+  placeholder="https://yourproject.com"
+>
+<br><br>
 
-  <label>Total Supply</label><br>
-  <input
-    id="totalSupply"
-    type="number"
-    placeholder="1000000000"
-  >
-  <br>
+<label>X / Twitter</label><br>
+<input
+  id="projectTwitter"
+  type="text"
+  placeholder="https://x.com/yourproject"
+>
+<br><br>
 
-  <p>
-    Meme: 100B - 1T<br>
-    Safe: 1B - 1T<br>
-    Pro: 100M - 100B
-  </p>
+<label>Logo URL</label><br>
+<input
+  id="projectLogo"
+  type="text"
+  placeholder="https://..."
+>
+<br><br>
 
-  <label>Creator Fee</label><br>
-  <select id="creatorFee">
-    <option>0%</option>
-    <option>1%</option>
-    <option>2%</option>
-  </select>
+<label>Category</label><br>
+<select id="projectCategory">
+  <option>Meme</option>
+  <option>DeFi</option>
+  <option>Gaming</option>
+  <option>AI</option>
+  <option>NFT</option>
+  <option>Infrastructure</option>
+</select>
+<br><br>
 
-  <p>
-    Creator Fee applies only to buys and sells.<br>
-    No fee on transfers.
-  </p>
+<label>Launch Type</label><br>
+<select id="launchType">
+  <option>Meme</option>
+  <option>Safe</option>
+  <option>Pro</option>
+</select>
+<br><br>
 
-  <button
-    type="button"
-    onclick="launchProject()"
-  >
-    Launch Project
-  </button>
+<label>Total Supply</label><br>
+<input
+  id="totalSupply"
+  type="number"
+  placeholder="1000000000"
+>
+<br>
+
+<p>
+Meme: 100B - 1T<br>
+Safe: 1B - 1T<br>
+Pro: 100M - 100B
+</p>
+
+<label>Creator Fee</label><br>
+<select id="creatorFee">
+  <option>0%</option>
+  <option>1%</option>
+  <option>2%</option>
+</select>
+
+<p>
+Creator Fee applies only to buys and sells.<br>
+No fee on transfers.
+</p>
+
+<button
+  type="button"
+  onclick="reviewLaunch()"
+>
+  Review Launch
+</button>
 
 </form>
 
@@ -100,19 +129,31 @@
 
 <script>
 
-function launchProject() {
+function reviewLaunch() {
 
   const tokenName =
-    document.getElementById("tokenName").value.trim();
+    document.getElementById("tokenName").value;
 
   const tokenSymbol =
-    document.getElementById("tokenSymbol").value.trim();
+    document.getElementById("tokenSymbol").value;
+
+  const projectDescription =
+    document.getElementById("projectDescription").value;
+
+  const projectWebsite =
+    document.getElementById("projectWebsite").value;
+
+  const projectTwitter =
+    document.getElementById("projectTwitter").value;
+
+  const projectLogo =
+    document.getElementById("projectLogo").value;
+
+  const projectCategory =
+    document.getElementById("projectCategory").value;
 
   const launchType =
     document.getElementById("launchType").value;
-
-  const category =
-    document.getElementById("category").value;
 
   const totalSupply =
     Number(
@@ -125,7 +166,7 @@ function launchProject() {
   if (!tokenName || !tokenSymbol) {
 
     alert(
-      "Please enter token name and symbol."
+      "Token Name and Symbol are required."
     );
 
     return;
@@ -141,7 +182,7 @@ function launchProject() {
   ) {
 
     alert(
-      "Invalid supply for Meme launch. Allowed range: 100B - 1T"
+      "Invalid supply for Meme launch."
     );
 
     return;
@@ -157,7 +198,7 @@ function launchProject() {
   ) {
 
     alert(
-      "Invalid supply for Safe launch. Allowed range: 1B - 1T"
+      "Invalid supply for Safe launch."
     );
 
     return;
@@ -173,53 +214,61 @@ function launchProject() {
   ) {
 
     alert(
-      "Invalid supply for Pro launch. Allowed range: 100M - 100B"
+      "Invalid supply for Pro launch."
     );
 
     return;
 
   }
 
-  const creatorWallet =
-    localStorage.getItem("walletAddress") ||
-    "Unknown";
-
   let projects =
     JSON.parse(
       localStorage.getItem("projects")
     ) || [];
 
+  const creatorWallet =
+    localStorage.getItem("walletAddress");
+
   const founderLaunches =
     projects.filter(
-      p => p.creatorWallet === creatorWallet
+      p =>
+      p.creatorWallet ===
+      creatorWallet
     ).length + 1;
 
-  const project = {
+  const newProject = {
 
     tokenName,
     tokenSymbol,
+    projectDescription,
+    projectWebsite,
+    projectTwitter,
+    projectLogo,
+    projectCategory,
     launchType,
-    category,
-
     totalSupply,
     creatorFee,
 
     trustScore: 100,
 
-    views: 0,
-    likes: 0,
-
-    ratings: [],
-    comments: [],
+    createdAt:
+      Date.now(),
 
     creatorWallet,
+
     founderLaunches,
 
-    createdAt: Date.now()
+    verified: false,
+
+    likes: 0,
+
+    views: 0
 
   };
 
-  projects.push(project);
+  projects.push(
+    newProject
+  );
 
   localStorage.setItem(
     "projects",
@@ -228,11 +277,11 @@ function launchProject() {
 
   localStorage.setItem(
     "selectedProject",
-    JSON.stringify(project)
+    JSON.stringify(newProject)
   );
 
   alert(
-    "🚀 Project launched successfully!"
+    "Project launched successfully!"
   );
 
   window.location.href =

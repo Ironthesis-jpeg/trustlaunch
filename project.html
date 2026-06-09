@@ -1,179 +1,164 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
-  <title>Project Details - TrustLaunch</title>
-  <link rel="stylesheet" href="styles.css">
-</head><body><nav>
+<meta charset="UTF-8">
+<title>Project Details - TrustLaunch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="leaderboard.html">Leaderboard</a>
-</nav><h1>🚀 Project Details</h1><section>  <h2 id="projectTitle">Loading...</h2>  <p>
-    <strong>Token Name:</strong>
-    <span id="tokenName"></span>
-  </p>  <p>
-    <strong>Token Symbol:</strong>
-    <span id="tokenSymbol"></span>
-  </p>  <p>
-    <strong>Launch Type:</strong>
-    <span id="launchType"></span>
-  </p>  <p>
-    <strong>Total Supply:</strong>
-    <span id="totalSupply"></span>
-  </p>  <p>
-    <strong>Creator Fee:</strong>
-    <span id="creatorFee"></span>
-  </p>  <p>
-    <strong>Trust Score:</strong>
-    <span id="trustScore"></span>
-  </p>  <p>
-    <strong>Project Rank Score:</strong>
-    <span id="rankScore"></span>
-  </p>  <p>
-    <strong>Creator Wallet:</strong>
-    <a href="#" id="creatorWallet"></a>
-  </p>  <p>
-    <strong>Projects Launched:</strong>
-    <span id="founderLaunches"></span>
-  </p>  <p>
-    <strong>Founder Reputation:</strong>
-    <span id="founderReputation"></span>
-  </p>  <p>
-    <strong>Founder Badge:</strong>
-    <span id="founderBadge"></span>
-  </p>  <p>
-    <strong>Launch Date:</strong>
-    <span id="launchDate"></span>
-  </p>  <p>
-    <strong>Status:</strong>
-    <span>🟢 Active</span>
-  </p></section><section>  <h2>🏆 Trust Summary</h2>  <div id="trustSummary">
-    Loading...
-  </div></section><section>  <button onclick="window.location.href='explore.html'">
-    ← Back To Explore
-  </button></section><footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer><script>
+</nav>
 
-const project =
-  JSON.parse(localStorage.getItem("selectedProject"));
+<h1>🚀 Project Details</h1>
 
-const allProjects =
-  JSON.parse(localStorage.getItem("projects")) || [];
+<section>
+  <h2 id="projectTitle">Loading...</h2>
 
-if (!project) {
+  <p><strong>Token Name:</strong> <span id="tokenName"></span></p>
+  <p><strong>Token Symbol:</strong> <span id="tokenSymbol"></span></p>
+  <p><strong>Launch Type:</strong> <span id="launchType"></span></p>
+  <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>
+  <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>
+  <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>
+  <p><strong>Rank Score:</strong> <span id="rankScore"></span></p>
+  <p><strong>Views:</strong> <span id="views">0</span></p>
+  <p><strong>Likes:</strong> <span id="likes">0</span></p>
+  <button id="likeBtn">❤️ Like</button>
+  <button id="shareBtn">🔗 Share</button>
 
-  document.body.innerHTML +=
-    "<p>Project not found.</p>";
+  <p><strong>Creator Wallet:</strong> <a href="#" id="creatorWallet"></a></p>
+  <p><strong>Founder Reputation:</strong> <span id="founderReputation"></span></p>
+  <p><strong>Founder Badge:</strong> <span id="founderBadge"></span></p>
+  <p><strong>Launch Date:</strong> <span id="launchDate"></span></p>
+  <p><strong>Project Age:</strong> <span id="projectAge"></span></p>
+</section>
 
-} else {
+<section>
+  <h2>🏆 Trust Summary</h2>
+  <div id="trustSummary"></div>
+</section>
 
-  document.getElementById("projectTitle").textContent =
-    project.tokenName;
+<section>
+  <h2>⭐ Community Rating</h2>
+  <input id="ratingInput" type="number" min="1" max="5" placeholder="1-5">
+  <button id="rateBtn">Rate</button>
+  <p>Average Rating: <span id="avgRating">0</span></p>
+</section>
 
-  document.getElementById("tokenName").textContent =
-    project.tokenName;
+<section>
+  <h2>💬 Comments</h2>
+  <input id="commentInput" placeholder="Write a comment">
+  <button id="commentBtn">Post</button>
+  <div id="comments"></div>
+</section>
 
-  document.getElementById("tokenSymbol").textContent =
-    project.tokenSymbol;
+<section>
+  <h2>🤝 Related Projects</h2>
+  <div id="relatedProjects"></div>
+</section>
 
-  document.getElementById("launchType").textContent =
-    project.launchType;
+<script>
+const project = JSON.parse(localStorage.getItem("selectedProject"));
+const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
 
-  document.getElementById("totalSupply").textContent =
-    Number(project.totalSupply).toLocaleString();
+if(project){
+  document.getElementById("projectTitle").textContent = project.tokenName;
+  document.getElementById("tokenName").textContent = project.tokenName;
+  document.getElementById("tokenSymbol").textContent = project.tokenSymbol;
+  document.getElementById("launchType").textContent = project.launchType;
+  document.getElementById("totalSupply").textContent = Number(project.totalSupply).toLocaleString();
+  document.getElementById("creatorFee").textContent = project.creatorFee;
+  document.getElementById("trustScore").textContent = project.trustScore;
 
-  document.getElementById("creatorFee").textContent =
-    project.creatorFee;
+  const launches = allProjects.filter(p => p.creatorWallet === project.creatorWallet).length;
+  const reputation = Math.min(100, 50 + launches * 10);
+  const rankScore = Number(project.trustScore || 0) + reputation + launches * 5;
 
-  document.getElementById("trustScore").textContent =
-    project.trustScore;
-
-  document.getElementById("creatorWallet").textContent =
-    project.creatorWallet || "Unknown";
-
-  const launchesByCreator =
-    allProjects.filter(p =>
-      p.creatorWallet === project.creatorWallet
-    ).length;
-
-  document.getElementById("founderLaunches").textContent =
-    launchesByCreator;
-
-  let reputation =
-    50 + (launchesByCreator * 10);
-
-  if (reputation > 100) {
-    reputation = 100;
-  }
-
-  document.getElementById("founderReputation").textContent =
-    reputation;
-
-  let founderBadge =
-    "⭐ Founder";
-
-  if (launchesByCreator >= 5) {
-    founderBadge =
-      "🏆 Trusted Founder";
-  }
-
-  if (launchesByCreator >= 10) {
-    founderBadge =
-      "👑 Elite Founder";
-  }
-
+  document.getElementById("rankScore").textContent = rankScore;
+  document.getElementById("founderReputation").textContent = reputation;
   document.getElementById("founderBadge").textContent =
-    founderBadge;
+    launches >= 10 ? "👑 Elite Founder" :
+    launches >= 5 ? "🏆 Trusted Founder" : "⭐ Founder";
 
-  const rankScore =
-    Number(project.trustScore || 0) +
-    reputation +
-    (launchesByCreator * 5);
-
-  document.getElementById("rankScore").textContent =
-    rankScore;
-
+  document.getElementById("creatorWallet").textContent = project.creatorWallet || "Unknown";
   document.getElementById("launchDate").textContent =
-    project.createdAt
-      ? new Date(project.createdAt).toLocaleString()
-      : "Unknown";
+    new Date(project.createdAt).toLocaleString();
 
-  document.getElementById("creatorWallet").onclick =
-    function() {
+  const ageDays = Math.floor((Date.now() - project.createdAt) / 86400000);
+  document.getElementById("projectAge").textContent = ageDays + " days";
 
-      localStorage.setItem(
-        "selectedCreator",
-        project.creatorWallet
-      );
+  const viewKey = "views_" + project.tokenSymbol;
+  let views = Number(localStorage.getItem(viewKey) || 0) + 1;
+  localStorage.setItem(viewKey, views);
+  document.getElementById("views").textContent = views;
 
-      window.location.href =
-        "creator.html";
+  const likeKey = "likes_" + project.tokenSymbol;
+  document.getElementById("likes").textContent =
+    localStorage.getItem(likeKey) || 0;
 
-      return false;
+  document.getElementById("likeBtn").onclick = () => {
+    let likes = Number(localStorage.getItem(likeKey) || 0) + 1;
+    localStorage.setItem(likeKey, likes);
+    document.getElementById("likes").textContent = likes;
+  };
 
-    };
-
-  let trustText = "";
-
-  if (rankScore >= 200) {
-    trustText =
-      "🏆 Elite ranked project with strong founder reputation.";
-  }
-  else if (rankScore >= 170) {
-    trustText =
-      "⭐ Trusted project with good launch history.";
-  }
-  else {
-    trustText =
-      "🚀 New project building reputation.";
-  }
+  document.getElementById("shareBtn").onclick = () => {
+    navigator.clipboard.writeText(location.href);
+    alert("Project link copied!");
+  };
 
   document.getElementById("trustSummary").textContent =
-    trustText;
+    rankScore >= 200 ? "🏆 Elite ranked project" :
+    rankScore >= 170 ? "⭐ Trusted project" :
+    "🚀 New project";
 
+  const ratingKey = "ratings_" + project.tokenSymbol;
+  const ratings = JSON.parse(localStorage.getItem(ratingKey) || "[]");
+  if(ratings.length){
+    document.getElementById("avgRating").textContent =
+      (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1);
+  }
+
+  document.getElementById("rateBtn").onclick = () => {
+    const value = Number(document.getElementById("ratingInput").value);
+    if(value < 1 || value > 5) return;
+    ratings.push(value);
+    localStorage.setItem(ratingKey, JSON.stringify(ratings));
+    location.reload();
+  };
+
+  const commentKey = "comments_" + project.tokenSymbol;
+  const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
+
+  function renderComments(){
+    document.getElementById("comments").innerHTML =
+      comments.map(c => "<p>💬 " + c + "</p>").join("");
+  }
+
+  renderComments();
+
+  document.getElementById("commentBtn").onclick = () => {
+    const txt = document.getElementById("commentInput").value;
+    if(!txt) return;
+    comments.push(txt);
+    localStorage.setItem(commentKey, JSON.stringify(comments));
+    renderComments();
+  };
+
+  const related = allProjects
+    .filter(p => p.launchType === project.launchType && p.tokenSymbol !== project.tokenSymbol)
+    .slice(0,5);
+
+  document.getElementById("relatedProjects").innerHTML =
+    related.map(p => "<p>🚀 " + p.tokenName + "</p>").join("");
 }
+</script>
 
-</script></body>
+</body>
 </html>

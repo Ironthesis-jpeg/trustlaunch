@@ -119,7 +119,115 @@ Activity Score:
 const project = JSON.parse(localStorage.getItem("selectedProject"));
 const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
 
-if(project){
+if(project){const ratings =
+JSON.parse(
+localStorage.getItem(
+"ratings_" +
+project.tokenSymbol
+) || "[]"
+);
+
+const avgRating =
+ratings.length
+?
+ratings.reduce(
+(a,b)=>a+b,
+0
+) / ratings.length
+:
+0;
+
+/* Verification */
+
+let verified =
+"❌ Not Verified";
+
+if(
+Number(project.trustScore) >= 95 &&
+reputation >= 80 &&
+avgRating >= 4.5
+){
+verified =
+"✅ Verified Project";
+}
+
+document.getElementById(
+"verificationStatus"
+).textContent =
+verified;
+
+/* Trust Category */
+
+let trustCategory =
+"🔴 High Risk";
+
+if(
+Number(project.trustScore) >= 90
+){
+trustCategory =
+"🟢 Trusted";
+}
+else if(
+Number(project.trustScore) >= 70
+){
+trustCategory =
+"🟡 Building Trust";
+}
+
+document.getElementById(
+"trustCategory"
+).textContent =
+trustCategory;
+
+/* Risk Status */
+
+let riskStatus =
+"✅ Normal";
+
+if(
+avgRating < 2 ||
+reputation < 60 ||
+Number(project.trustScore) < 60
+){
+riskStatus =
+"🚨 Under Review";
+}
+
+document.getElementById(
+"riskStatus"
+).textContent =
+riskStatus;
+
+/* Trust Breakdown */
+
+document.getElementById(
+"contractSafety"
+).textContent =
+"40 / 40";
+
+document.getElementById(
+"reputationScore"
+).textContent =
+reputation + " / 100";
+
+document.getElementById(
+"communityScore"
+).textContent =
+avgRating.toFixed(1) +
+" / 5";
+
+const activityScore =
+Math.min(
+100,
+views +
+likes
+);
+
+document.getElementById(
+"activityScore"
+).textContent =
+activityScore +
+" / 100";
   document.getElementById("projectTitle").textContent = project.tokenName;
   document.getElementById("tokenName").textContent = project.tokenName;
   document.getElementById("tokenSymbol").textContent = project.tokenSymbol;

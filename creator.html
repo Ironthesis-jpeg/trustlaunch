@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Creator Profile - TrustLaunch</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -18,7 +19,7 @@
   <a href="watchlist.html">Watchlist</a>
 </nav>
 
-<h1>Creator Profile</h1>
+<h1>👤 Creator Profile</h1>
 
 <section>
 
@@ -48,6 +49,16 @@
   </p>
 
   <p>
+    <strong>Creator Score:</strong>
+    <span id="creatorScore"></span>
+  </p>
+
+  <p>
+    <strong>Hall Of Fame Projects:</strong>
+    <span id="hofProjects"></span>
+  </p>
+
+  <p>
     <strong>Latest Launch:</strong>
     <span id="latestLaunch"></span>
   </p>
@@ -56,7 +67,7 @@
 
 <section>
 
-  <h2>Projects By Creator</h2>
+  <h2>🚀 Projects By Creator</h2>
 
   <div id="creatorProjects"></div>
 
@@ -134,6 +145,76 @@ if (creatorProjects.length >= 25)
 document.getElementById("creatorLevel").textContent =
   level;
 
+/* Hall Of Fame Projects */
+
+const hofProjects =
+creatorProjects.filter(project => {
+
+const ratings =
+JSON.parse(
+localStorage.getItem(
+"ratings_" +
+project.tokenSymbol
+) || "[]"
+);
+
+const avgRating =
+ratings.length
+?
+ratings.reduce(
+(a,b)=>a+b,
+0
+) / ratings.length
+:
+0;
+
+const rankScore =
+Number(project.trustScore || 0) +
+reputation +
+(creatorProjects.length * 5);
+
+return (
+Number(project.trustScore) >= 95 &&
+rankScore >= 200 &&
+avgRating >= 4 &&
+reputation >= 80
+);
+
+}).length;
+
+document.getElementById(
+"hofProjects"
+).textContent =
+hofProjects;
+
+/* Creator Score */
+
+const avgTrust =
+creatorProjects.length
+?
+creatorProjects.reduce(
+(sum,p)=>
+sum +
+Number(p.trustScore || 0),
+0
+) /
+creatorProjects.length
+:
+0;
+
+const creatorScore =
+Math.round(
+avgTrust +
+reputation +
+(creatorProjects.length * 5) +
+(hofProjects * 25)
+);
+
+document.getElementById(
+"creatorScore"
+).textContent =
+creatorScore;
+
 /* Latest Launch */
 
 if (creatorProjects.length > 0) {
@@ -177,13 +258,25 @@ creatorProjects
 
         <h3>🚀 ${project.tokenName}</h3>
 
-        <p><strong>Symbol:</strong> ${project.tokenSymbol}</p>
+        <p>
+          <strong>Symbol:</strong>
+          ${project.tokenSymbol}
+        </p>
 
-        <p><strong>Launch Type:</strong> ${project.launchType}</p>
+        <p>
+          <strong>Launch Type:</strong>
+          ${project.launchType}
+        </p>
 
-        <p><strong>Trust Score:</strong> ${project.trustScore}</p>
+        <p>
+          <strong>Trust Score:</strong>
+          ${project.trustScore}
+        </p>
 
-        <p><strong>Launch Date:</strong> ${launchTime}</p>
+        <p>
+          <strong>Launch Date:</strong>
+          ${launchTime}
+        </p>
 
         <button onclick='viewProject(${JSON.stringify(project)})'>
           View Project

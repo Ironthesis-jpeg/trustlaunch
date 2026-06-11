@@ -74,11 +74,12 @@
 <label>Category</label><br>
 <select id="projectCategory">
   <option>Meme</option>
+  <option>AI</option>
   <option>DeFi</option>
   <option>Gaming</option>
-  <option>AI</option>
-  <option>NFT</option>
   <option>Infrastructure</option>
+  <option>SocialFi</option>
+  <option>Utility</option>
 </select>
 <br><br>
 
@@ -184,9 +185,7 @@ function reviewLaunch() {
     )
   ) {
 
-    alert(
-      "Invalid supply for Meme launch."
-    );
+    alert("Invalid supply for Meme launch.");
 
     return;
 
@@ -200,9 +199,7 @@ function reviewLaunch() {
     )
   ) {
 
-    alert(
-      "Invalid supply for Safe launch."
-    );
+    alert("Invalid supply for Safe launch.");
 
     return;
 
@@ -216,30 +213,13 @@ function reviewLaunch() {
     )
   ) {
 
-    alert(
-      "Invalid supply for Pro launch."
-    );
+    alert("Invalid supply for Pro launch.");
 
     return;
 
   }
 
-  let projects =
-    JSON.parse(
-      localStorage.getItem("projects")
-    ) || [];
-
-  const creatorWallet =
-    localStorage.getItem("walletAddress");
-
-  const founderLaunches =
-    projects.filter(
-      p =>
-      p.creatorWallet ===
-      creatorWallet
-    ).length + 1;
-
-  const newProject = {
+  const pendingProject = {
 
     tokenName,
     tokenSymbol,
@@ -250,48 +230,19 @@ function reviewLaunch() {
     projectCategory,
     launchType,
     totalSupply,
-    creatorFee,
-
-    trustScore: 100,
-
-    createdAt:
-      Date.now(),
-
-    creatorWallet,
-
-    founderLaunches,
-
-    verified: false,
-
-    likes: 0,
-
-    views: 0
+    creatorFee
 
   };
 
-  projects.push(
-    newProject
-  );
-
   localStorage.setItem(
-    "projects",
-    JSON.stringify(projects)
-  );
-
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(newProject)
-  );
-
-  alert(
-    "Project launched successfully!"
+    "pendingProject",
+    JSON.stringify(pendingProject)
   );
 
   window.location.href =
-    "project.html";
+    "review.html";
 
 }
-
 </script>
 
 </body>

@@ -1,61 +1,225 @@
 <!DOCTYPE html><html>
 <head>
-  <title>Review Launch - TrustLaunch</title>
-  <link rel="stylesheet" href="styles.css">
-</head><body><nav>
+<meta charset="UTF-8">
+<title>Review Launch - TrustLaunch</title><link rel="stylesheet" href="styles.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
   <a href="notifications.html">Notifications</a>
   <a href="watchlist.html">Watchlist</a>
-</nav><h1>Review Launch</h1><section>  <h2>Launch Summary</h2>  <p><strong>Token Name:</strong> <span id="reviewTokenName"></span></p>  <p><strong>Token Symbol:</strong> <span id="reviewTokenSymbol"></span></p>  <p><strong>Launch Type:</strong> <span id="reviewLaunchType"></span></p>  <p><strong>Total Supply:</strong> <span id="reviewTotalSupply"></span></p>  <p><strong>Creator Fee:</strong> <span id="reviewCreatorFee"></span></p>  <p><strong>Creator Wallet:</strong> <span id="reviewCreatorWallet"></span></p>  <p><strong>Review Date:</strong> <span id="reviewDate"></span></p></section><section>  <h2>Trust Score</h2>  <p><strong>Score:</strong> 100</p>  <ul>
-    <li>✓ Fixed Supply</li>
-    <li>✓ No Mint Function</li>
-    <li>✓ Founder Allocation = 0%</li>
-    <li>✓ Team Allocation = 0%</li>
-    <li>✓ LP Burned Forever</li>
-    <li>✓ Creator Fee on trades only</li>
-  </ul></section><section>  <h2>Launch Rules</h2>  <ul>
-    <li>Supply rules validated</li>
-    <li>Fair launch principles enforced</li>
-    <li>Founder allocation disabled</li>
-    <li>Trust score visible to investors</li>
-  </ul></section><br><a href="launch.html">
-  <button type="button">
-    Back
-  </button>
-</a><a href="wallet.html">
-  <button type="button">
-    Launch Token
-  </button>
-</a><footer>
+</nav><h1>🚀 Review Launch</h1><section><h2>Launch Summary</h2><p><strong>Token Name:</strong> <span id="reviewTokenName"></span></p><p><strong>Token Symbol:</strong> <span id="reviewTokenSymbol"></span></p><p><strong>Category:</strong> <span id="reviewCategory"></span></p><p><strong>Launch Type:</strong> <span id="reviewLaunchType"></span></p><p><strong>Total Supply:</strong> <span id="reviewTotalSupply"></span></p><p><strong>Creator Fee:</strong> <span id="reviewCreatorFee"></span></p><p><strong>Creator Wallet:</strong> <span id="reviewCreatorWallet"></span></p><p><strong>Review Date:</strong> <span id="reviewDate"></span></p></section><section><h2>🏆 Trust Score</h2><p><strong>Score:</strong> 100</p><ul>
+<li>✓ Fixed Supply</li>
+<li>✓ No Mint Function</li>
+<li>✓ Founder Allocation = 0%</li>
+<li>✓ Team Allocation = 0%</li>
+<li>✓ LP Burned Forever</li>
+<li>✓ Creator Fee on trades only</li>
+</ul></section><section><h2>📋 Launch Rules</h2><ul>
+<li>Supply rules validated</li>
+<li>Fair launch principles enforced</li>
+<li>Founder allocation disabled</li>
+<li>Trust score visible to investors</li>
+</ul></section><br><button
+onclick="window.location.href='launch.html'"
+
+«»
+
+Back
+</button>
+
+<button
+id="confirmLaunchBtn"
+
+«»
+
+Launch Token
+</button>
+
+<footer>
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer><script>
 
-document.getElementById("reviewTokenName").textContent =
-  localStorage.getItem("tokenName");
+const supabaseUrl =
+"https://uyuokduxqjghmqypheyi.supabase.co";
 
-document.getElementById("reviewTokenSymbol").textContent =
-  localStorage.getItem("tokenSymbol");
+const supabaseKey =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-document.getElementById("reviewLaunchType").textContent =
-  localStorage.getItem("launchType");
+const supabase =
+window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
-document.getElementById("reviewTotalSupply").textContent =
-  localStorage.getItem("totalSupply");
+const project =
+JSON.parse(
+  localStorage.getItem(
+    "pendingProject"
+  )
+);
 
-document.getElementById("reviewCreatorFee").textContent =
-  localStorage.getItem("creatorFee");
+if (!project) {
 
-document.getElementById("reviewCreatorWallet").textContent =
-  localStorage.getItem("walletAddress") || "Not Connected";
+  alert(
+    "No pending project found."
+  );
 
-document.getElementById("reviewDate").textContent =
-  new Date().toLocaleString();
+  window.location.href =
+    "launch.html";
+
+}
+
+/* Populate Review */
+
+document.getElementById(
+  "reviewTokenName"
+).textContent =
+project.tokenName || "";
+
+document.getElementById(
+  "reviewTokenSymbol"
+).textContent =
+project.tokenSymbol || "";
+
+document.getElementById(
+  "reviewCategory"
+).textContent =
+project.projectCategory || "";
+
+document.getElementById(
+  "reviewLaunchType"
+).textContent =
+project.launchType || "";
+
+document.getElementById(
+  "reviewTotalSupply"
+).textContent =
+Number(
+  project.totalSupply || 0
+).toLocaleString();
+
+document.getElementById(
+  "reviewCreatorFee"
+).textContent =
+project.creatorFee || "";
+
+document.getElementById(
+  "reviewCreatorWallet"
+).textContent =
+localStorage.getItem(
+  "walletAddress"
+) || "Not Connected";
+
+document.getElementById(
+  "reviewDate"
+).textContent =
+new Date().toLocaleString();
+
+/* Confirm Launch */
+
+document.getElementById(
+  "confirmLaunchBtn"
+).onclick =
+async function() {
+
+  const wallet =
+  localStorage.getItem(
+    "walletAddress"
+  );
+
+  if (!wallet) {
+
+    alert(
+      "Please connect your wallet first."
+    );
+
+    window.location.href =
+      "wallet.html";
+
+    return;
+
+  }
+
+  const { data, error } =
+  await supabase
+    .from("projects")
+    .insert([
+      {
+        token_name:
+          project.tokenName,
+
+        token_symbol:
+          project.tokenSymbol,
+
+        project_description:
+          project.projectDescription,
+
+        project_website:
+          project.projectWebsite,
+
+        project_twitter:
+          project.projectTwitter,
+
+        project_logo:
+          project.projectLogo,
+
+        project_category:
+          project.projectCategory,
+
+        launch_type:
+          project.launchType,
+
+        total_supply:
+          project.totalSupply,
+
+        creator_fee:
+          project.creatorFee,
+
+        trust_score:
+          project.trustScore,
+
+        creator_wallet:
+          wallet,
+
+        founder_launches:
+          project.founderLaunches
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(data)
+  );
+
+  localStorage.removeItem(
+    "pendingProject"
+  );
+
+  alert(
+    "Project launched successfully!"
+  );
+
+  window.location.href =
+    "project.html";
+
+};
 
 </script></body>
 </html>

@@ -43,10 +43,12 @@ window.reviewLaunch = async function(event) {
     alert("Invalid total supply.");
     return;
   }
-
-  // If you want just test first:
-  alert("Review working ✅");
-
+if (error) {
+  alert("Supabase error: " + error.message);
+  console.log(error);
+  return;
+}
+  
   window.location.href = "review.html";
 };
 </script>

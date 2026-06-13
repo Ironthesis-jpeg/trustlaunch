@@ -4,6 +4,99 @@
 <meta charset="UTF-8">
 <title>Launch Token - TrustLaunch</title>
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://uyuokduxqjghmqypheyi.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function reviewLaunch(event) {
+  event.preventDefault();
+
+  const tokenName = document.getElementById("tokenName").value.trim();
+  const tokenSymbol = document.getElementById("tokenSymbol").value.trim();
+  const projectDescription = document.getElementById("projectDescription").value.trim();
+  const projectWebsite = document.getElementById("projectWebsite").value.trim();
+  const projectTwitter = document.getElementById("projectTwitter").value.trim();
+  const projectLogo = document.getElementById("projectLogo").value.trim();
+  const projectCategory = document.getElementById("projectCategory").value;
+  const launchType = document.getElementById("launchType").value;
+
+  const totalSupplyRaw = document.getElementById("totalSupply").value;
+  const creatorFeeRaw = document.getElementById("creatorFee").value;
+
+  if (!tokenName || !tokenSymbol) {
+    alert("Token Name and Symbol are required.");
+    return;
+  }
+
+  if (!totalSupplyRaw) {
+    alert("Total Supply is required.");
+    return;
+  }
+
+  const totalSupply = Number(totalSupplyRaw);
+  const creatorFee = parseInt(creatorFeeRaw);
+
+  if (isNaN(totalSupply) || totalSupply <= 0) {
+    alert("Invalid total supply.");
+    return;
+  }
+
+  if (launchType === "Meme" &&
+    (totalSupply < 100000000000 || totalSupply > 1000000000000)) {
+    alert("Invalid supply for Meme launch.");
+    return;
+  }
+
+  if (launchType === "Safe" &&
+    (totalSupply < 1000000000 || totalSupply > 1000000000000)) {
+    alert("Invalid supply for Safe launch.");
+    return;
+  }
+
+  if (launchType === "Pro" &&
+    (totalSupply < 100000000 || totalSupply > 100000000000)) {
+    alert("Invalid supply for Pro launch.");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("launches")
+    .insert([
+      {
+        token_name: tokenName,
+        token_symbol: tokenSymbol,
+        description: projectDescription,
+        website: projectWebsite,
+        twitter: projectTwitter,
+        logo: projectLogo,
+        category: projectCategory,
+        launch_type: launchType,
+        total_supply: totalSupply,
+        creator_fee: creatorFee
+      }
+    ])
+    .select();
+
+  if (error) {
+    console.error(error);
+    alert("Failed to save launch.");
+    return;
+  }
+
+  localStorage.setItem("pendingProject", JSON.stringify(data[0]));
+
+  window.location.href = "review.html";
+}
+</script>
+
 </head>
 
 <body>
@@ -22,54 +115,25 @@
 
 <h1>🚀 Launch Token</h1>
 
-<form>
+<form onsubmit="reviewLaunch(event)">
 
 <label>Token Name</label><br>
-<input
-  id="tokenName"
-  type="text"
-  placeholder="Wolf Coin"
->
-<br><br>
+<input id="tokenName" type="text" placeholder="Wolf Coin"><br><br>
 
 <label>Token Symbol</label><br>
-<input
-  id="tokenSymbol"
-  type="text"
-  placeholder="WOLF"
->
-<br><br>
+<input id="tokenSymbol" type="text" placeholder="WOLF"><br><br>
 
 <label>Project Description</label><br>
-<textarea
-  id="projectDescription"
-  placeholder="Describe your project..."
-></textarea>
-<br><br>
+<textarea id="projectDescription" placeholder="Describe your project..."></textarea><br><br>
 
 <label>Website</label><br>
-<input
-  id="projectWebsite"
-  type="text"
-  placeholder="https://yourproject.com"
->
-<br><br>
+<input id="projectWebsite" type="text" placeholder="https://yourproject.com"><br><br>
 
 <label>X / Twitter</label><br>
-<input
-  id="projectTwitter"
-  type="text"
-  placeholder="https://x.com/yourproject"
->
-<br><br>
+<input id="projectTwitter" type="text" placeholder="https://x.com/yourproject"><br><br>
 
 <label>Logo URL</label><br>
-<input
-  id="projectLogo"
-  type="text"
-  placeholder="https://..."
->
-<br><br>
+<input id="projectLogo" type="text" placeholder="https://..."><br><br>
 
 <label>Category</label><br>
 <select id="projectCategory">
@@ -80,24 +144,17 @@
   <option>Infrastructure</option>
   <option>SocialFi</option>
   <option>Utility</option>
-</select>
-<br><br>
+</select><br><br>
 
 <label>Launch Type</label><br>
 <select id="launchType">
   <option>Meme</option>
   <option>Safe</option>
   <option>Pro</option>
-</select>
-<br><br>
+</select><br><br>
 
 <label>Total Supply</label><br>
-<input
-  id="totalSupply"
-  type="number"
-  placeholder="1000000000"
->
-<br>
+<input id="totalSupply" type="number" placeholder="1000000000"><br>
 
 <p>
 Meme: 100B - 1T<br>
@@ -107,9 +164,9 @@ Pro: 100M - 100B
 
 <label>Creator Fee</label><br>
 <select id="creatorFee">
-  <option>0%</option>
-  <option>1%</option>
-  <option>2%</option>
+  <option value="0">0%</option>
+  <option value="1">1%</option>
+  <option value="2">2%</option>
 </select>
 
 <p>
@@ -117,10 +174,7 @@ Creator Fee applies only to buys and sells.<br>
 No fee on transfers.
 </p>
 
-<button
-  type="button"
-  onclick="reviewLaunch()"
->
+<button type="submit">
   Review Launch
 </button>
 
@@ -130,120 +184,6 @@ No fee on transfers.
   <p>TrustLaunch</p>
   <p>Build trust before hype.</p>
 </footer>
-
-<script>
-
-function reviewLaunch() {
-
-  const tokenName =
-    document.getElementById("tokenName").value;
-
-  const tokenSymbol =
-    document.getElementById("tokenSymbol").value;
-
-  const projectDescription =
-    document.getElementById("projectDescription").value;
-
-  const projectWebsite =
-    document.getElementById("projectWebsite").value;
-
-  const projectTwitter =
-    document.getElementById("projectTwitter").value;
-
-  const projectLogo =
-    document.getElementById("projectLogo").value;
-
-  const projectCategory =
-    document.getElementById("projectCategory").value;
-
-  const launchType =
-    document.getElementById("launchType").value;
-
-  const totalSupply =
-    Number(
-      document.getElementById("totalSupply").value
-    );
-
-  const creatorFee =
-    document.getElementById("creatorFee").value;
-
-  if (!tokenName || !tokenSymbol) {
-
-    alert(
-      "Token Name and Symbol are required."
-    );
-
-    return;
-
-  }
-
-  if (
-    launchType === "Meme" &&
-    (
-      totalSupply < 100000000000 ||
-      totalSupply > 1000000000000
-    )
-  ) {
-
-    alert("Invalid supply for Meme launch.");
-
-    return;
-
-  }
-
-  if (
-    launchType === "Safe" &&
-    (
-      totalSupply < 1000000000 ||
-      totalSupply > 1000000000000
-    )
-  ) {
-
-    alert("Invalid supply for Safe launch.");
-
-    return;
-
-  }
-
-  if (
-    launchType === "Pro" &&
-    (
-      totalSupply < 100000000 ||
-      totalSupply > 100000000000
-    )
-  ) {
-
-    alert("Invalid supply for Pro launch.");
-
-    return;
-
-  }
-
-  const pendingProject = {
-
-    tokenName,
-    tokenSymbol,
-    projectDescription,
-    projectWebsite,
-    projectTwitter,
-    projectLogo,
-    projectCategory,
-    launchType,
-    totalSupply,
-    creatorFee
-
-  };
-
-  localStorage.setItem(
-    "pendingProject",
-    JSON.stringify(pendingProject)
-  );
-
-  window.location.href =
-    "review.html";
-
-}
-</script>
 
 </body>
 </html>

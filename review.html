@@ -106,31 +106,31 @@ document.getElementById("confirmBtn").onclick = async function () {
   const wallet = localStorage.getItem("walletAddress") || "anonymous";
 
   const { data, error } = await supabaseClient
-    .from("launches")
-    .insert([
-      {
-        token_name: project.tokenName,
-        token_symbol: project.tokenSymbol,
-        project_description: project.projectDescription,
-        project_website: project.projectWebsite,
-        project_twitter: project.projectTwitter,
-        project_logo: project.projectLogo,
-        project_category: project.projectCategory,
-        launch_type: project.launchType,
-        total_supply: project.totalSupply,
-        creator_fee: project.creatorFee,
-        creator_wallet: wallet,
-        trust_score: 100
-      }
-    ])
-    .select()
-    .single();
+  .from("launches")
+  .insert([
+    {
+      token_name: project.tokenName,
+      token_symbol: project.tokenSymbol,
+      description: project.projectDescription,
+      website: project.projectWebsite,
+      twitter: project.projectTwitter,
+      logo: project.projectLogo,
+      category: project.projectCategory,
+      launch_type: project.launchType,
+      total_supply: project.totalSupply,
+      creator_fee: Number(project.creatorFee),
+      creator_wallet: wallet,
+      trust_score: 100
+    }
+  ])
+  .select()
+  .single();
 
   if (error) {
-    console.error(error);
-    alert(error.message);
-    return;
-  }
+  console.error(error);
+  alert("Launch failed:\n" + JSON.stringify(error, null, 2));
+  return;
+}
 
   localStorage.setItem("selectedProject", JSON.stringify(data));
   localStorage.removeItem("pendingProject");

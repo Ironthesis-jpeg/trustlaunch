@@ -16,20 +16,15 @@ const supabaseClient = supabase.createClient(
   SUPABASE_KEY
 );
 
-async function reviewLaunch(event) {
+window.reviewLaunch = async function(event) {
   event.preventDefault();
+
+  console.log("Review function triggered");
 
   const tokenName = document.getElementById("tokenName").value.trim();
   const tokenSymbol = document.getElementById("tokenSymbol").value.trim();
-  const projectDescription = document.getElementById("projectDescription").value.trim();
-  const projectWebsite = document.getElementById("projectWebsite").value.trim();
-  const projectTwitter = document.getElementById("projectTwitter").value.trim();
-  const projectLogo = document.getElementById("projectLogo").value.trim();
-  const projectCategory = document.getElementById("projectCategory").value;
-  const launchType = document.getElementById("launchType").value;
 
   const totalSupplyRaw = document.getElementById("totalSupply").value;
-  const creatorFeeRaw = document.getElementById("creatorFee").value;
 
   if (!tokenName || !tokenSymbol) {
     alert("Token Name and Symbol are required.");
@@ -42,60 +37,17 @@ async function reviewLaunch(event) {
   }
 
   const totalSupply = Number(totalSupplyRaw);
-  const creatorFee = parseInt(creatorFeeRaw);
 
   if (isNaN(totalSupply) || totalSupply <= 0) {
     alert("Invalid total supply.");
     return;
   }
 
-  if (launchType === "Meme" &&
-    (totalSupply < 100000000000 || totalSupply > 1000000000000)) {
-    alert("Invalid supply for Meme launch.");
-    return;
-  }
-
-  if (launchType === "Safe" &&
-    (totalSupply < 1000000000 || totalSupply > 1000000000000)) {
-    alert("Invalid supply for Safe launch.");
-    return;
-  }
-
-  if (launchType === "Pro" &&
-    (totalSupply < 100000000 || totalSupply > 100000000000)) {
-    alert("Invalid supply for Pro launch.");
-    return;
-  }
-
-  const { data, error } = await supabaseClient
-    .from("launches")
-    .insert([
-      {
-        token_name: tokenName,
-        token_symbol: tokenSymbol,
-        description: projectDescription,
-        website: projectWebsite,
-        twitter: projectTwitter,
-        logo: projectLogo,
-        category: projectCategory,
-        launch_type: launchType,
-        total_supply: totalSupply,
-        creator_fee: creatorFee
-      }
-    ])
-    .select();
-
-  if (error) {
-  console.log("SUPABASE ERROR FULL:", error);
-  alert(error.message);
-  return;
-}
-  }
-
-  localStorage.setItem("pendingProject", JSON.stringify(data[0]));
+  // If you want just test first:
+  alert("Review working ✅");
 
   window.location.href = "review.html";
-}
+};
 </script>
 
 </head>

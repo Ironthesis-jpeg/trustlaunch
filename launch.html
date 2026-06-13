@@ -1,7 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Launch Token - TrustLaunch</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-
-const supabaseKey = "YOUR_ANON_KEY_HERE";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
 const supabaseClient = window.supabase.createClient(
   supabaseUrl,
@@ -39,7 +48,7 @@ window.reviewLaunch = function(event) {
     return;
   }
 
-  // SAVE EVERYTHING FOR REVIEW PAGE
+  // Save all data for review page
   const pendingProject = {
     tokenName,
     tokenSymbol,
@@ -53,11 +62,99 @@ window.reviewLaunch = function(event) {
     creatorFee
   };
 
-  localStorage.setItem(
-    "pendingProject",
-    JSON.stringify(pendingProject)
-  );
+  localStorage.setItem("pendingProject", JSON.stringify(pendingProject));
 
   window.location.href = "review.html";
 };
 </script>
+
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
+  <a href="trending.html">Trending</a>
+  <a href="notifications.html">Notifications</a>
+  <a href="watchlist.html">Watchlist</a>
+</nav>
+
+<h1>🚀 Launch Token</h1>
+
+<form onsubmit="reviewLaunch(event)">
+
+<label>Token Name</label><br>
+<input id="tokenName" type="text" placeholder="Wolf Coin"><br><br>
+
+<label>Token Symbol</label><br>
+<input id="tokenSymbol" type="text" placeholder="WOLF"><br><br>
+
+<label>Project Description</label><br>
+<textarea id="projectDescription" placeholder="Describe your project..."></textarea><br><br>
+
+<label>Website</label><br>
+<input id="projectWebsite" type="text" placeholder="https://yourproject.com"><br><br>
+
+<label>X / Twitter</label><br>
+<input id="projectTwitter" type="text" placeholder="https://x.com/yourproject"><br><br>
+
+<label>Logo URL</label><br>
+<input id="projectLogo" type="text" placeholder="https://..."><br><br>
+
+<label>Category</label><br>
+<select id="projectCategory">
+  <option>Meme</option>
+  <option>AI</option>
+  <option>DeFi</option>
+  <option>Gaming</option>
+  <option>Infrastructure</option>
+  <option>SocialFi</option>
+  <option>Utility</option>
+</select><br><br>
+
+<label>Launch Type</label><br>
+<select id="launchType">
+  <option>Meme</option>
+  <option>Safe</option>
+  <option>Pro</option>
+</select><br><br>
+
+<label>Total Supply</label><br>
+<input id="totalSupply" type="number" placeholder="1000000000"><br>
+
+<p>
+Meme: 100B - 1T<br>
+Safe: 1B - 1T<br>
+Pro: 100M - 100B
+</p>
+
+<label>Creator Fee</label><br>
+<select id="creatorFee">
+  <option value="0">0%</option>
+  <option value="1">1%</option>
+  <option value="2">2%</option>
+</select>
+
+<p>
+Creator Fee applies only to buys and sells.<br>
+No fee on transfers.
+</p>
+
+<button type="submit">
+  Review Launch
+</button>
+
+</form>
+
+<footer>
+  <p>TrustLaunch</p>
+  <p>Build trust before hype.</p>
+</footer>
+
+</body>
+</html>

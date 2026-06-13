@@ -1,225 +1,142 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Review Launch - TrustLaunch</title><link rel="stylesheet" href="styles.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav>
+<title>Review Launch - TrustLaunch</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>
-  <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
-</nav><h1>🚀 Review Launch</h1><section><h2>Launch Summary</h2><p><strong>Token Name:</strong> <span id="reviewTokenName"></span></p><p><strong>Token Symbol:</strong> <span id="reviewTokenSymbol"></span></p><p><strong>Category:</strong> <span id="reviewCategory"></span></p><p><strong>Launch Type:</strong> <span id="reviewLaunchType"></span></p><p><strong>Total Supply:</strong> <span id="reviewTotalSupply"></span></p><p><strong>Creator Fee:</strong> <span id="reviewCreatorFee"></span></p><p><strong>Creator Wallet:</strong> <span id="reviewCreatorWallet"></span></p><p><strong>Review Date:</strong> <span id="reviewDate"></span></p></section><section><h2>🏆 Trust Score</h2><p><strong>Score:</strong> 100</p><ul>
-<li>✓ Fixed Supply</li>
-<li>✓ No Mint Function</li>
-<li>✓ Founder Allocation = 0%</li>
-<li>✓ Team Allocation = 0%</li>
-<li>✓ LP Burned Forever</li>
-<li>✓ Creator Fee on trades only</li>
-</ul></section><section><h2>📋 Launch Rules</h2><ul>
-<li>Supply rules validated</li>
-<li>Fair launch principles enforced</li>
-<li>Founder allocation disabled</li>
-<li>Trust score visible to investors</li>
-</ul></section><br><button
-onclick="window.location.href='launch.html'"
+</nav>
 
-«»
+<h1>🚀 Review Launch</h1>
 
-Back
+<section>
+  <h2>Launch Summary</h2>
+
+  <p><strong>Token Name:</strong> <span id="name"></span></p>
+  <p><strong>Symbol:</strong> <span id="symbol"></span></p>
+  <p><strong>Description:</strong> <span id="desc"></span></p>
+  <p><strong>Category:</strong> <span id="category"></span></p>
+  <p><strong>Launch Type:</strong> <span id="type"></span></p>
+  <p><strong>Total Supply:</strong> <span id="supply"></span></p>
+  <p><strong>Creator Fee:</strong> <span id="fee"></span></p>
+  <p><strong>Website:</strong> <span id="web"></span></p>
+  <p><strong>Twitter:</strong> <span id="tw"></span></p>
+  <p><strong>Wallet:</strong> <span id="wallet"></span></p>
+  <p><strong>Date:</strong> <span id="date"></span></p>
+</section>
+
+<hr>
+
+<button onclick="window.location.href='launch.html'">
+  ⬅ Back
 </button>
 
-<button
-id="confirmLaunchBtn"
-
-«»
-
-Launch Token
+<button id="confirmBtn">
+  🚀 Confirm Launch
 </button>
 
 <footer>
   <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer><script>
+</footer>
 
-const supabaseUrl =
-"https://uyuokduxqjghmqypheyi.supabase.co";
+<script>
+/* =========================
+   SUPABASE SETUP
+========================= */
 
-const supabaseKey =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+const supabaseUrl = "https://YOUR_PROJECT.supabase.co";
+const supabaseKey = "YOUR_ANON_KEY";
 
-const supabase =
-window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   supabaseUrl,
   supabaseKey
 );
 
-const project =
-JSON.parse(
-  localStorage.getItem(
-    "pendingProject"
-  )
-);
+/* =========================
+   LOAD PROJECT
+========================= */
+
+const project = JSON.parse(localStorage.getItem("pendingProject"));
 
 if (!project) {
-
-  alert(
-    "No pending project found."
-  );
-
-  window.location.href =
-    "launch.html";
-
+  alert("No pending project found.");
+  window.location.href = "launch.html";
 }
 
-/* Populate Review */
+/* =========================
+   POPULATE UI
+========================= */
 
-document.getElementById(
-  "reviewTokenName"
-).textContent =
-project.tokenName || "";
+document.getElementById("name").textContent = project.tokenName || "";
+document.getElementById("symbol").textContent = project.tokenSymbol || "";
+document.getElementById("desc").textContent = project.projectDescription || "";
+document.getElementById("category").textContent = project.projectCategory || "";
+document.getElementById("type").textContent = project.launchType || "";
+document.getElementById("supply").textContent = Number(project.totalSupply || 0).toLocaleString();
+document.getElementById("fee").textContent = project.creatorFee || "0%";
+document.getElementById("web").textContent = project.projectWebsite || "N/A";
+document.getElementById("tw").textContent = project.projectTwitter || "N/A";
 
-document.getElementById(
-  "reviewTokenSymbol"
-).textContent =
-project.tokenSymbol || "";
+const wallet = localStorage.getItem("walletAddress") || "anonymous";
+document.getElementById("wallet").textContent = wallet;
 
-document.getElementById(
-  "reviewCategory"
-).textContent =
-project.projectCategory || "";
+document.getElementById("date").textContent = new Date().toLocaleString();
 
-document.getElementById(
-  "reviewLaunchType"
-).textContent =
-project.launchType || "";
+/* =========================
+   CONFIRM LAUNCH
+========================= */
 
-document.getElementById(
-  "reviewTotalSupply"
-).textContent =
-Number(
-  project.totalSupply || 0
-).toLocaleString();
+document.getElementById("confirmBtn").onclick = async function () {
 
-document.getElementById(
-  "reviewCreatorFee"
-).textContent =
-project.creatorFee || "";
+  const wallet = localStorage.getItem("walletAddress") || "anonymous";
 
-document.getElementById(
-  "reviewCreatorWallet"
-).textContent =
-localStorage.getItem(
-  "walletAddress"
-) || "Not Connected";
-
-document.getElementById(
-  "reviewDate"
-).textContent =
-new Date().toLocaleString();
-
-/* Confirm Launch */
-
-document.getElementById(
-  "confirmLaunchBtn"
-).onclick =
-async function() {
-
-  const wallet =
-  localStorage.getItem(
-    "walletAddress"
-  );
-
-  if (!wallet) {
-
-    alert(
-      "Please connect your wallet first."
-    );
-
-    window.location.href =
-      "wallet.html";
-
-    return;
-
-  }
-
-  const { data, error } =
-  await supabase
-    .from("projects")
+  const { data, error } = await supabaseClient
+    .from("launches")
     .insert([
       {
-        token_name:
-          project.tokenName,
-
-        token_symbol:
-          project.tokenSymbol,
-
-        project_description:
-          project.projectDescription,
-
-        project_website:
-          project.projectWebsite,
-
-        project_twitter:
-          project.projectTwitter,
-
-        project_logo:
-          project.projectLogo,
-
-        project_category:
-          project.projectCategory,
-
-        launch_type:
-          project.launchType,
-
-        total_supply:
-          project.totalSupply,
-
-        creator_fee:
-          project.creatorFee,
-
-        trust_score:
-          project.trustScore,
-
-        creator_wallet:
-          wallet,
-
-        founder_launches:
-          project.founderLaunches
+        token_name: project.tokenName,
+        token_symbol: project.tokenSymbol,
+        project_description: project.projectDescription,
+        project_website: project.projectWebsite,
+        project_twitter: project.projectTwitter,
+        project_logo: project.projectLogo,
+        project_category: project.projectCategory,
+        launch_type: project.launchType,
+        total_supply: project.totalSupply,
+        creator_fee: project.creatorFee,
+        creator_wallet: wallet,
+        trust_score: 100
       }
     ])
     .select()
     .single();
 
   if (error) {
-
-    alert(
-      error.message
-    );
-
+    console.error(error);
+    alert(error.message);
     return;
-
   }
 
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(data)
-  );
+  localStorage.setItem("selectedProject", JSON.stringify(data));
+  localStorage.removeItem("pendingProject");
 
-  localStorage.removeItem(
-    "pendingProject"
-  );
+  alert("Launch successful 🚀");
 
-  alert(
-    "Project launched successfully!"
-  );
-
-  window.location.href =
-    "project.html";
-
+  window.location.href = "project.html";
 };
 
-</script></body>
+</script>
+
+</body>
 </html>

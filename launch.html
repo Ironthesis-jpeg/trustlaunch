@@ -86,9 +86,10 @@ async function reviewLaunch(event) {
     .select();
 
   if (error) {
-    console.error(error);
-    alert("Failed to save launch.");
-    return;
+  console.log("SUPABASE ERROR FULL:", error);
+  alert(error.message);
+  return;
+}
   }
 
   localStorage.setItem("pendingProject", JSON.stringify(data[0]));

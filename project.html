@@ -5,6 +5,7 @@
 <title>Project Details - TrustLaunch</title>
 <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
 <nav>
@@ -30,82 +31,35 @@
   <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>
   <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>
   <p><strong>Rank Score:</strong> <span id="rankScore"></span></p>
+
   <p><strong>Views:</strong> <span id="views">0</span></p>
   <p><strong>Likes:</strong> <span id="likes">0</span></p>
+
   <button id="likeBtn">❤️ Like</button>
-  <button id="watchlistBtn">
-⭐ Add To Watchlist
-</button>
   <button id="shareBtn">🔗 Share</button>
 
-  <p><strong>Creator Wallet:</strong> <a href="#" id="creatorWallet"></a></p>
-  <p><strong>Founder Reputation:</strong> <span id="founderReputation"></span></p>
-  <p><strong>Founder Badge:</strong> <span id="founderBadge"></span></p>
+  <p><strong>Creator Wallet:</strong> <span id="creatorWallet"></span></p>
   <p><strong>Launch Date:</strong> <span id="launchDate"></span></p>
   <p><strong>Project Age:</strong> <span id="projectAge"></span></p>
 </section>
 
-<section>
-  <h2>🏆 Trust Summary</h2>
-  <section>
-
-<h2>🛡️ Verification</h2>
-
-<p>
-<strong>Status:</strong>
-<span id="verificationStatus"></span>
-</p>
-
-<p>
-<strong>Trust Category:</strong>
-<span id="trustCategory"></span>
-</p>
-
-<p>
-<strong>Risk Status:</strong>
-<span id="riskStatus"></span>
-</p>
-
-</section>
+<hr>
 
 <section>
-
-<h2>📊 Trust Breakdown</h2>
-
-<p>
-Contract Safety:
-<span id="contractSafety"></span>
-</p>
-
-<p>
-Founder Reputation:
-<span id="reputationScore"></span>
-</p>
-
-<p>
-Community Rating:
-<span id="communityScore"></span>
-</p>
-
-<p>
-Activity Score:
-<span id="activityScore"></span>
-</p>
-
-</section>
+  <h2>🏆 Summary</h2>
   <div id="trustSummary"></div>
 </section>
 
 <section>
-  <h2>⭐ Community Rating</h2>
-  <input id="ratingInput" type="number" min="1" max="5" placeholder="1-5">
+  <h2>⭐ Rating</h2>
+  <input id="ratingInput" type="number" min="1" max="5">
   <button id="rateBtn">Rate</button>
   <p>Average Rating: <span id="avgRating">0</span></p>
 </section>
 
 <section>
   <h2>💬 Comments</h2>
-  <input id="commentInput" placeholder="Write a comment">
+  <input id="commentInput" placeholder="Write comment">
   <button id="commentBtn">Post</button>
   <div id="comments"></div>
 </section>
@@ -116,208 +70,202 @@ Activity Score:
 </section>
 
 <script>
+/* =========================
+   LOAD DATA
+========================= */
+
 const project = JSON.parse(localStorage.getItem("selectedProject"));
 const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
 
-if(project){const ratings =
-JSON.parse(
-localStorage.getItem(
-"ratings_" +
-project.tokenSymbol
-) || "[]"
-);
-
-const avgRating =
-ratings.length
-?
-ratings.reduce(
-(a,b)=>a+b,
-0
-) / ratings.length
-:
-0;
-
-/* Verification */
-
-let verified =
-"❌ Not Verified";
-
-if(
-Number(project.trustScore) >= 95 &&
-reputation >= 80 &&
-avgRating >= 4.5
-){
-verified =
-"✅ Verified Project";
+if (!project) {
+  document.body.innerHTML = "<h2>No project found</h2>";
+  throw new Error("No project found");
 }
 
-document.getElementById(
-"verificationStatus"
-).textContent =
-verified;
+/* =========================
+   BASIC STATS FIRST
+========================= */
 
-/* Trust Category */
+const viewKey = "views_" + project.token_symbol;
+let views = Number(localStorage.getItem(viewKey) || 0) + 1;
+localStorage.setItem(viewKey, views);
 
-let trustCategory =
-"🔴 High Risk";
+const likeKey = "likes_" + project.token_symbol;
+let likes = Number(localStorage.getItem(likeKey) || 0);
 
-if(
-Number(project.trustScore) >= 90
-){
-trustCategory =
-"🟢 Trusted";
+const ratingKey = "ratings_" + project.token_symbol;
+const ratings = JSON.parse(localStorage.getItem(ratingKey) || "[]");
+
+const avgRating = ratings.length
+  ? ratings.reduce((a,b)=>a+b,0) / ratings.length
+  : 0;
+
+/* =========================
+   REPUTATION
+========================= */
+
+const launches = allProjects.filter(
+  p => p.creator_wallet === project.creator_wallet
+).length;
+
+const reputation = Math.min(100, 50 + launches * 10);
+
+/* =========================
+   TRUST CHECK
+========================= */
+
+let verified = "❌ Not Verified";
+
+if (
+  Number(project.trust_score) >= 95 &&
+  reputation >= 80 &&
+  avgRating >= 4.5
+) {
+  verified = "✅ Verified Project";
 }
-else if(
-Number(project.trustScore) >= 70
-){
-trustCategory =
-"🟡 Building Trust";
+
+/* =========================
+   TRUST CATEGORY
+========================= */
+
+let trustCategory = "🔴 High Risk";
+
+if (Number(project.trust_score) >= 90) {
+  trustCategory = "🟢 Trusted";
+} else if (Number(project.trust_score) >= 70) {
+  trustCategory = "🟡 Building Trust";
 }
 
-document.getElementById(
-"trustCategory"
-).textContent =
-trustCategory;
+/* =========================
+   RISK STATUS
+========================= */
 
-/* Risk Status */
+let riskStatus = "✅ Normal";
 
-let riskStatus =
-"✅ Normal";
-
-if(
-avgRating < 2 ||
-reputation < 60 ||
-Number(project.trustScore) < 60
-){
-riskStatus =
-"🚨 Under Review";
+if (
+  avgRating < 2 ||
+  reputation < 60 ||
+  Number(project.trust_score) < 60
+) {
+  riskStatus = "🚨 Under Review";
 }
 
-document.getElementById(
-"riskStatus"
-).textContent =
-riskStatus;
+/* =========================
+   UI POPULATION
+========================= */
 
-/* Trust Breakdown */
+document.getElementById("projectTitle").textContent = project.token_name;
+document.getElementById("tokenName").textContent = project.token_name;
+document.getElementById("tokenSymbol").textContent = project.token_symbol;
+document.getElementById("launchType").textContent = project.launch_type;
+document.getElementById("totalSupply").textContent = Number(project.total_supply).toLocaleString();
+document.getElementById("creatorFee").textContent = project.creator_fee;
+document.getElementById("trustScore").textContent = project.trust_score;
 
-document.getElementById(
-"contractSafety"
-).textContent =
-"40 / 40";
+document.getElementById("rankScore").textContent =
+Number(project.trust_score) + reputation;
 
-document.getElementById(
-"reputationScore"
-).textContent =
-reputation + " / 100";
+document.getElementById("creatorWallet").textContent =
+project.creator_wallet || "Unknown";
 
-document.getElementById(
-"communityScore"
-).textContent =
-avgRating.toFixed(1) +
-" / 5";
+document.getElementById("launchDate").textContent =
+new Date(project.created_at || Date.now()).toLocaleString();
 
-const activityScore =
-Math.min(
-100,
-views +
-likes
-);
+document.getElementById("projectAge").textContent =
+Math.floor((Date.now() - (project.created_at || Date.now())) / 86400000) + " days";
 
-document.getElementById(
-"activityScore"
-).textContent =
-activityScore +
-" / 100";
-  document.getElementById("projectTitle").textContent = project.tokenName;
-  document.getElementById("tokenName").textContent = project.tokenName;
-  document.getElementById("tokenSymbol").textContent = project.tokenSymbol;
-  document.getElementById("launchType").textContent = project.launchType;
-  document.getElementById("totalSupply").textContent = Number(project.totalSupply).toLocaleString();
-  document.getElementById("creatorFee").textContent = project.creatorFee;
-  document.getElementById("trustScore").textContent = project.trustScore;
+/* =========================
+   VIEWS & LIKES
+========================= */
 
-  const launches = allProjects.filter(p => p.creatorWallet === project.creatorWallet).length;
-  const reputation = Math.min(100, 50 + launches * 10);
-  const rankScore = Number(project.trustScore || 0) + reputation + launches * 5;
+document.getElementById("views").textContent = views;
+document.getElementById("likes").textContent = likes;
 
-  document.getElementById("rankScore").textContent = rankScore;
-  document.getElementById("founderReputation").textContent = reputation;
-  document.getElementById("founderBadge").textContent =
-    launches >= 10 ? "👑 Elite Founder" :
-    launches >= 5 ? "🏆 Trusted Founder" : "⭐ Founder";
+/* Like button */
+document.getElementById("likeBtn").onclick = () => {
+  likes++;
+  localStorage.setItem(likeKey, likes);
+  document.getElementById("likes").textContent = likes;
+};
 
-  document.getElementById("creatorWallet").textContent = project.creatorWallet || "Unknown";
-  document.getElementById("launchDate").textContent =
-    new Date(project.createdAt).toLocaleString();
+/* Share */
+document.getElementById("shareBtn").onclick = () => {
+  navigator.clipboard.writeText(location.href);
+  alert("Link copied!");
+};
 
-  const ageDays = Math.floor((Date.now() - project.createdAt) / 86400000);
-  document.getElementById("projectAge").textContent = ageDays + " days";
+/* =========================
+   TRUST SUMMARY
+========================= */
 
-  const viewKey = "views_" + project.tokenSymbol;
-  let views = Number(localStorage.getItem(viewKey) || 0) + 1;
-  localStorage.setItem(viewKey, views);
-  document.getElementById("views").textContent = views;
+document.getElementById("trustSummary").textContent =
+Number(project.trust_score) >= 200
+  ? "🏆 Elite ranked project"
+  : Number(project.trust_score) >= 170
+  ? "⭐ Trusted project"
+  : "🚀 New project";
 
-  const likeKey = "likes_" + project.tokenSymbol;
-  document.getElementById("likes").textContent =
-    localStorage.getItem(likeKey) || 0;
+/* =========================
+   RATING SYSTEM
+========================= */
 
-  document.getElementById("likeBtn").onclick = () => {
-    let likes = Number(localStorage.getItem(likeKey) || 0) + 1;
-    localStorage.setItem(likeKey, likes);
-    document.getElementById("likes").textContent = likes;
-  };
+document.getElementById("avgRating").textContent =
+avgRating.toFixed(1);
 
-  document.getElementById("shareBtn").onclick = () => {
-    navigator.clipboard.writeText(location.href);
-    alert("Project link copied!");
-  };
+document.getElementById("rateBtn").onclick = () => {
+  const value = Number(document.getElementById("ratingInput").value);
+  if (value < 1 || value > 5) return;
 
-  document.getElementById("trustSummary").textContent =
-    rankScore >= 200 ? "🏆 Elite ranked project" :
-    rankScore >= 170 ? "⭐ Trusted project" :
-    "🚀 New project";
+  ratings.push(value);
+  localStorage.setItem(ratingKey, JSON.stringify(ratings));
+  location.reload();
+};
 
-  const ratingKey = "ratings_" + project.tokenSymbol;
-  const ratings = JSON.parse(localStorage.getItem(ratingKey) || "[]");
-  if(ratings.length){
-    document.getElementById("avgRating").textContent =
-      (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1);
-  }
+/* =========================
+   COMMENTS
+========================= */
 
-  document.getElementById("rateBtn").onclick = () => {
-    const value = Number(document.getElementById("ratingInput").value);
-    if(value < 1 || value > 5) return;
-    ratings.push(value);
-    localStorage.setItem(ratingKey, JSON.stringify(ratings));
-    location.reload();
-  };
+const commentKey = "comments_" + project.token_symbol;
+const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
 
-  const commentKey = "comments_" + project.tokenSymbol;
-  const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
+function renderComments() {
+  document.getElementById("comments").innerHTML =
+    comments.map(c => `<p>💬 ${c}</p>`).join("");
+}
 
-  function renderComments(){
-    document.getElementById("comments").innerHTML =
-      comments.map(c => "<p>💬 " + c + "</p>").join("");
-  }
+renderComments();
 
+document.getElementById("commentBtn").onclick = () => {
+  const txt = document.getElementById("commentInput").value;
+  if (!txt) return;
+
+  comments.push(txt);
+  localStorage.setItem(commentKey, JSON.stringify(comments));
   renderComments();
+};
 
-  document.getElementById("commentBtn").onclick = () => {
-    const txt = document.getElementById("commentInput").value;
-    if(!txt) return;
-    comments.push(txt);
-    localStorage.setItem(commentKey, JSON.stringify(comments));
-    renderComments();
-  };
+/* =========================
+   RELATED PROJECTS
+========================= */
 
-  const related = allProjects
-    .filter(p => p.launchType === project.launchType && p.tokenSymbol !== project.tokenSymbol)
-    .slice(0,5);
+const related = allProjects
+  .filter(p =>
+    p.launch_type === project.launch_type &&
+    p.token_symbol !== project.token_symbol
+  )
+  .slice(0, 5);
 
-  document.getElementById("relatedProjects").innerHTML =
-    related.map(p => "<p>🚀 " + p.tokenName + "</p>").join("");
-}
+document.getElementById("relatedProjects").innerHTML =
+related.map(p => `<p>🚀 ${p.token_name}</p>`).join("");
+
+/* =========================
+   FINAL STATUS
+========================= */
+
+document.getElementById("verificationStatus")?.textContent = verified;
+document.getElementById("trustCategory")?.textContent = trustCategory;
+document.getElementById("riskStatus")?.textContent = riskStatus;
+
 </script>
 
 </body>

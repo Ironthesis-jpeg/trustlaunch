@@ -82,36 +82,32 @@ function calculateTrend(p) {
    LOAD TRENDING
 ========================= */
 
-async function updateTrendingScore(project) {
+async function loadTrending() {
 
-  const created = new Date(project.created_at || Date.now());
-  const ageHours = (Date.now() - created.getTime()) / (1000 * 60 * 60);
-
-  let recencyBoost = 0;
-
-  if (ageHours < 24) recencyBoost = 50;
-  else if (ageHours < 72) recencyBoost = 20;
-
-  const likes = Number(project.likes || 0);
-  const views = Number(project.views || 0);
-  const trust = Number(project.trust_score || 0);
-
-  const score =
-    likes * 3 +
-    views * 0.5 +
-    trust * 1.2 +
-    recencyBoost;
-
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("launches")
-    .update({ trending_score: score })
-    .eq("id", project.id);
+    .select("*");
 
   if (error) {
-    console.log("Trending update error:", error.message);
+    document.getElementById("container").innerHTML =
+      "Error loading trending";
+    return;
   }
 
-  return score;
+  const list = data || [];
+
+  // ALWAYS recompute trending score to keep it fresh
+  for (let p of list) {
+    await updateTrendingScore(p);
+  }
+
+  // re-fetch updated data
+  const { data: updated } = await supabase
+    .from("launches")
+    .select("*")
+    .order("trending_score", { ascending: false });
+
+  render(updated || []);
 }
 
 /* =========================

@@ -5,7 +5,6 @@
 <title>Trending - TrustLaunch</title>
 
 <link rel="stylesheet" href="styles.css">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -15,6 +14,7 @@
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 </nav>
 
@@ -27,19 +27,16 @@
 <script>
 
 /* =========================
-   SUPABASE SETUP
+   SUPABASE
 ========================= */
 
-const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"; // keep or replace with real anon key
-
 const supabase = window.supabase.createClient(
-  supabaseUrl,
-  supabaseKey
+  "https://uyuokduxqjghmqypheyi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
 );
 
 /* =========================
-   SAFE TREND SCORE ENGINE
+   VIRAL SCORE ENGINE
 ========================= */
 
 function calculateTrend(p) {
@@ -51,21 +48,26 @@ function calculateTrend(p) {
   const created = new Date(p.created_at || Date.now());
   const ageHours = (Date.now() - created.getTime()) / (1000 * 60 * 60);
 
-  const recencyBoost =
-    ageHours < 24 ? 50 :
-    ageHours < 72 ? 20 :
-    0;
+  /* 🔥 recency boost */
+  let recencyBoost = 0;
 
-  return (
-    likes * 3 +
-    views * 0.5 +
-    trust * 1.2 +
-    recencyBoost
-  );
+  if (ageHours < 6) recencyBoost = 80;
+  else if (ageHours < 24) recencyBoost = 50;
+  else if (ageHours < 72) recencyBoost = 20;
+
+  /* 🔥 viral formula */
+  const engagement = (likes * 4) + (views * 0.5);
+
+  const score =
+    engagement +
+    trust * 1.5 +
+    recencyBoost;
+
+  return score;
 }
 
 /* =========================
-   LOAD TRENDING FROM SUPABASE
+   LOAD TRENDING
 ========================= */
 
 async function loadTrending() {
@@ -74,24 +76,26 @@ async function loadTrending() {
     .from("launches")
     .select("*");
 
-  if (error || !data) {
+  if (error) {
     document.getElementById("container").innerHTML =
-      "<p>❌ Error loading trending projects</p>";
+      "<p>Error loading trending</p>";
     return;
   }
 
-  const list = data.map(p => ({
+  let list = data || [];
+
+  list = list.map(p => ({
     ...p,
     trend_score: calculateTrend(p)
   }));
 
   list.sort((a, b) => b.trend_score - a.trend_score);
 
-  render(list);
+  render(list.slice(0, 20));
 }
 
 /* =========================
-   SAFE NAVIGATION
+   OPEN PROJECT
 ========================= */
 
 function openProject(p) {
@@ -100,7 +104,7 @@ function openProject(p) {
 }
 
 /* =========================
-   RENDER UI
+   RENDER
 ========================= */
 
 function render(list) {
@@ -113,53 +117,34 @@ function render(list) {
     return;
   }
 
-  list.forEach((p) => {
-
-    const name = p.token_name || "Unknown";
-    const symbol = p.token_symbol || "N/A";
-    const likes = p.likes || 0;
-    const views = p.views || 0;
-    const trust = p.trust_score || 0;
+  list.forEach((p, index) => {
 
     let badge = "🚀 Hot";
-    if (p.trend_score > 500) badge = "🔥 Viral";
-    if (p.trend_score > 1000) badge = "👑 Legendary";
-
-    const buttonId = `btn_${symbol}_${Math.floor(Math.random() * 10000)}`;
+    if (index === 0) badge = "🔥 #1 Trending";
+    else if (p.trend_score > 800) badge = "👑 Viral";
+    else if (p.trend_score > 400) badge = "⚡ Rising";
 
     container.innerHTML += `
-      <div style="padding:12px; border-bottom:1px solid #333">
+      <div style="padding:10px; border-bottom:1px solid #333">
 
-        <h3>${badge} ${name}</h3>
+        <h3>${badge} ${p.token_name}</h3>
 
-        <p><strong>Symbol:</strong> ${symbol}</p>
-        <p><strong>Trend Score:</strong> ${p.trend_score.toFixed(2)}</p>
+        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
+        <p><strong>Likes:</strong> ${p.likes || 0}</p>
+        <p><strong>Views:</strong> ${p.views || 0}</p>
+        <p><strong>Trust:</strong> ${p.trust_score}</p>
+        <p><strong>Trend Score:</strong> ${Math.floor(p.trend_score)}</p>
 
-        <p><strong>Likes:</strong> ${likes}</p>
-        <p><strong>Views:</strong> ${views}</p>
-        <p><strong>Trust:</strong> ${trust}</p>
-
-        <button id="${buttonId}">
+        <button onclick='openProject(${JSON.stringify(p)})'>
           View Project
         </button>
 
       </div>
     `;
-
-    setTimeout(() => {
-      const btn = document.getElementById(buttonId);
-      if (btn) {
-        btn.onclick = () => openProject(p);
-      }
-    }, 0);
-
   });
 }
 
-/* =========================
-   INIT
-========================= */
-
+/* INIT */
 loadTrending();
 
 </script>

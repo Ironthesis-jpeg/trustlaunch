@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Analytics - TrustLaunch</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="trending.html">Trending</a>
+  <a href="wallet.html">Wallet</a>
+</nav>
+
+<h1>📊 Live Analytics</h1>
+
+<section>
+  <h2>🔥 Top Projects (Live)</h2>
+  <canvas id="trendChart"></canvas>
+</section>
+
+<section>
+  <h2>❤️ Likes vs 👀 Views</h2>
+  <canvas id="engagementChart"></canvas>
+</section>
+
+<script>
+
+/* =========================
+   SUPABASE SETUP
+========================= */
+
+const supabase = window.supabase.createClient(
+  "https://uyuokduxqjghmqypheyi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
+);
+
+/* =========================
+   CHART INSTANCES
+========================= */
+
+let trendChart;
+let engagementChart;
+
+/* =========================
+   LOAD DATA
+========================= */
+
+async function fetchData() {
+
+  const { data } = await supabase
+    .from("launches")
+    .select("*");
+
+  return data || [];
+}
+
+/* =========================
+   PROCESS DATA
+========================= */
+
+function processData(projects) {
+
+  projects.sort((a, b) =>
+    (b.trending_score || 0) - (a.trending_score || 0)
+  );
+
+  const top = projects.slice(0, 5);
+
+  return {
+    labels: top.map(p => p.token_name),
+    likes: top.map(p => p.likes || 0),
+    views: top.map(p => p.views || 0),
+    trends: top.map(p => p.trending_score || 0)
+  };
+}
+
+/* =========================
+   INIT CHARTS
+========================= */
+
+function initCharts(data) {
+
+  const ctx1 = document.getElementById("trendChart");
+  const ctx2 = document.getElementById("engagementChart");
+
+  trendChart = new Chart(ctx1, {
+    type: "bar",
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: "Trending Score",
+        data: data.trends
+      }]
+    }
+  });
+
+  engagementChart = new Chart(ctx2, {
+    type: "line",
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: "Likes",
+          data: data.likes
+        },
+        {
+          label: "Views",
+          data: data.views
+        }
+      ]
+    }
+  });
+}
+
+/* =========================
+   UPDATE CHARTS
+========================= */
+
+function updateCharts(data) {
+
+  trendChart.data.labels = data.labels;
+  trendChart.data.datasets[0].data = data.trends;
+  trendChart.update();
+
+  engagementChart.data.labels = data.labels;
+  engagementChart.data.datasets[0].data = data.likes;
+  engagementChart.data.datasets[1].data = data.views;
+  engagementChart.update();
+}
+
+/* =========================
+   LIVE LOOP
+========================= */
+
+async function refresh() {
+
+  const raw = await fetchData();
+  const processed = processData(raw);
+
+  if (!trendChart) {
+    initCharts(processed);
+  } else {
+    updateCharts(processed);
+  }
+}
+
+/* =========================
+   REAL-TIME SUBSCRIPTION
+========================= */
+
+supabase
+  .channel("launches-live")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "launches"
+    },
+    () => {
+      refresh();
+    }
+  )
+  .subscribe();
+
+/* =========================
+   AUTO REFRESH (backup)
+========================= */
+
+setInterval(refresh, 5000);
+
+/* INIT */
+refresh();
+
+</script>
+
+</body>
+</html>

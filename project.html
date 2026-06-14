@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>Project Details - TrustLaunch</title>
+
 <link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -13,244 +15,146 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
   <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
 </nav>
 
 <h1>🚀 Project Details</h1>
 
 <section>
-  <h2 id="projectTitle">Loading...</h2>
+  <h2 id="title">Loading...</h2>
 
-  <p><strong>Token Name:</strong> <span id="tokenName"></span></p>
-  <p><strong>Token Symbol:</strong> <span id="tokenSymbol"></span></p>
-  <p><strong>Launch Type:</strong> <span id="launchType"></span></p>
-  <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>
-  <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>
-  <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>
-
-  <p><strong>Rank Score:</strong> <span id="rankScore"></span></p>
-
-  <p><strong>Views:</strong> <span id="views">0</span></p>
-  <p><strong>Likes:</strong> <span id="likes">0</span></p>
+  <p>Symbol: <span id="symbol"></span></p>
+  <p>Type: <span id="type"></span></p>
+  <p>Trust Score: <span id="trust"></span></p>
+  <p>Views: <span id="views">0</span></p>
+  <p>Likes: <span id="likes">0</span></p>
 
   <button id="likeBtn">❤️ Like</button>
   <button id="shareBtn">🔗 Share</button>
 
-  <p><strong>Creator Wallet:</strong> <span id="creatorWallet"></span></p>
-  <p><strong>Launch Date:</strong> <span id="launchDate"></span></p>
-  <p><strong>Project Age:</strong> <span id="projectAge"></span></p>
+  <p>Creator: <span id="creator"></span></p>
+  <p>Created: <span id="created"></span></p>
 </section>
 
 <hr>
 
 <section>
-  <h2>🏆 Summary</h2>
-  <div id="trustSummary"></div>
-</section>
-
-<section>
-  <h2>⭐ Rating</h2>
-  <input id="ratingInput" type="number" min="1" max="5" placeholder="1-5">
-  <button id="rateBtn">Rate</button>
-  <p>Average Rating: <span id="avgRating">0</span></p>
-</section>
-
-<section>
-  <h2>💬 Comments</h2>
-  <input id="commentInput" placeholder="Write comment">
-  <button id="commentBtn">Post</button>
-  <div id="comments"></div>
-</section>
-
-<section>
-  <h2>🤝 Related Projects</h2>
-  <div id="relatedProjects"></div>
+  <h2>📊 Rank Info</h2>
+  <p id="score"></p>
 </section>
 
 <script>
 
-window.onload = function () {
+/* =========================
+   SUPABASE
+========================= */
 
-  /* =========================
-     SAFE LOAD PROJECT
-  ========================= */
+const supabase = window.supabase.createClient(
+  "https://uyuokduxqjghmqypheyi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
+);
 
-  const project = JSON.parse(localStorage.getItem("selectedProject") || "null");
-  const allProjects = JSON.parse(localStorage.getItem("projects") || "[]");
+/* =========================
+   GET SELECTED PROJECT
+========================= */
 
-  if (!project) {
-    document.body.innerHTML = "<h2>❌ No project found</h2>";
-    return;
-  }
+const project = JSON.parse(localStorage.getItem("selectedProject"));
 
-  /* =========================
-     NORMALIZE DATA
-  ========================= */
+if (!project) {
+  document.body.innerHTML = "<h2>No project found</h2>";
+}
 
-  const name = project.token_name || project.tokenName || "Unknown";
-  const symbol = project.token_symbol || project.tokenSymbol || "N/A";
-  const launchType = project.launch_type || project.launchType || "N/A";
-  const supply = Number(project.total_supply || project.totalSupply || 0);
-  const trust = Number(project.trust_score || project.trustScore || 0);
+/* =========================
+   LOAD REAL DATA FROM SUPABASE
+========================= */
 
-  const wallet =
-    project.creator_wallet ||
-    project.creatorWallet ||
-    "Unknown";
+async function loadProject() {
 
-  const createdRaw =
-    project.created_at || project.createdAt || Date.now();
+  const { data } = await supabase
+    .from("launches")
+    .select("*")
+    .eq("id", project.id)
+    .single();
 
-  const created = new Date(createdRaw);
+  if (!data) return;
 
-  /* =========================
-     VIEWS / LIKES (SAFE)
-  ========================= */
+  window.currentProject = data;
 
-  const viewKey = "views_" + symbol;
-  let views = Number(localStorage.getItem(viewKey) || 0) + 1;
-  localStorage.setItem(viewKey, views);
+  render(data);
+  incrementViews(data);
+}
 
-  const likeKey = "likes_" + symbol;
-  let likes = Number(localStorage.getItem(likeKey) || 0);
+/* =========================
+   INCREMENT VIEWS (REAL DB)
+========================= */
 
-  /* =========================
-     REPUTATION ENGINE
-  ========================= */
+async function incrementViews(p) {
 
-  const launches = allProjects.filter(p =>
-    (p.creator_wallet || p.creatorWallet) === wallet
-  ).length;
+  await supabase
+    .from("launches")
+    .update({ views: (p.views || 0) + 1 })
+    .eq("id", p.id);
+}
 
-  const reputation = Math.min(100, 50 + launches * 10);
+/* =========================
+   LIKE SYSTEM (REAL DB)
+========================= */
 
-  const rankScore =
-    trust + reputation + launches * 5 + likes + views;
+document.getElementById("likeBtn").onclick = async function () {
 
-  /* =========================
-     RATING
-  ========================= */
+  const p = window.currentProject;
 
-  const ratingKey = "ratings_" + symbol;
-  const ratings =
-    JSON.parse(localStorage.getItem(ratingKey) || "[]");
+  const { data } = await supabase
+    .from("launches")
+    .select("likes")
+    .eq("id", p.id)
+    .single();
 
-  const avgRating = ratings.length
-    ? ratings.reduce((a,b)=>a+b,0) / ratings.length
-    : 0;
+  const newLikes = (data.likes || 0) + 1;
 
-  /* =========================
-     RENDER UI
-  ========================= */
+  await supabase
+    .from("launches")
+    .update({ likes: newLikes })
+    .eq("id", p.id);
 
-  document.getElementById("projectTitle").textContent = name;
-  document.getElementById("tokenName").textContent = name;
-  document.getElementById("tokenSymbol").textContent = symbol;
-  document.getElementById("launchType").textContent = launchType;
-  document.getElementById("totalSupply").textContent = supply.toLocaleString();
-  document.getElementById("creatorFee").textContent = project.creator_fee || "0%";
-  document.getElementById("trustScore").textContent = trust;
-
-  document.getElementById("rankScore").textContent = rankScore;
-
-  document.getElementById("creatorWallet").textContent = wallet;
-  document.getElementById("launchDate").textContent = created.toLocaleString();
-
-  document.getElementById("projectAge").textContent =
-    Math.floor((Date.now() - created.getTime()) / 86400000) + " days";
-
-  document.getElementById("views").textContent = views;
-  document.getElementById("likes").textContent = likes;
-
-  /* =========================
-     LIKE SYSTEM
-  ========================= */
-
-  document.getElementById("likeBtn").onclick = () => {
-    likes++;
-    localStorage.setItem(likeKey, likes);
-    document.getElementById("likes").textContent = likes;
-  };
-
-  /* =========================
-     SHARE SYSTEM
-  ========================= */
-
-  document.getElementById("shareBtn").onclick = () => {
-    navigator.clipboard.writeText(location.href);
-    alert("Project link copied!");
-  };
-
-  /* =========================
-     SUMMARY
-  ========================= */
-
-  document.getElementById("trustSummary").textContent =
-    rankScore >= 200
-      ? "🏆 Elite Project"
-      : rankScore >= 170
-      ? "⭐ Trusted Project"
-      : "🚀 New Project";
-
-  /* =========================
-     RATING
-  ========================= */
-
-  document.getElementById("avgRating").textContent =
-    avgRating.toFixed(1);
-
-  document.getElementById("rateBtn").onclick = () => {
-    const value = Number(document.getElementById("ratingInput").value);
-    if (value < 1 || value > 5) return;
-
-    ratings.push(value);
-    localStorage.setItem(ratingKey, JSON.stringify(ratings));
-    location.reload();
-  };
-
-  /* =========================
-     COMMENTS (SAFE)
-  ========================= */
-
-  const commentKey = "comments_" + symbol;
-  const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
-
-  function renderComments() {
-    document.getElementById("comments").innerHTML =
-      comments.map(c => `<p>💬 ${c}</p>`).join("");
-  }
-
-  renderComments();
-
-  document.getElementById("commentBtn").onclick = () => {
-    const txt = document.getElementById("commentInput").value.trim();
-    if (!txt) return;
-
-    comments.push(txt);
-    localStorage.setItem(commentKey, JSON.stringify(comments));
-    renderComments();
-  };
-
-  /* =========================
-     RELATED PROJECTS
-  ========================= */
-
-  const related = allProjects
-    .filter(p =>
-      (p.launch_type || p.launchType) === launchType &&
-      (p.token_symbol || p.tokenSymbol) !== symbol
-    )
-    .slice(0, 5);
-
-  document.getElementById("relatedProjects").innerHTML =
-    related.map(p =>
-      `<p>🚀 ${p.token_name || p.tokenName}</p>`
-    ).join("");
-
+  document.getElementById("likes").textContent = newLikes;
 };
+
+/* =========================
+   SHARE
+========================= */
+
+document.getElementById("shareBtn").onclick = function () {
+  navigator.clipboard.writeText(location.href);
+  alert("Link copied");
+};
+
+/* =========================
+   RENDER
+========================= */
+
+function render(p) {
+
+  const score =
+    (p.likes || 0) +
+    (p.views || 0) +
+    (p.trust_score || 0);
+
+  document.getElementById("title").textContent = p.token_name;
+  document.getElementById("symbol").textContent = p.token_symbol;
+  document.getElementById("type").textContent = p.launch_type;
+  document.getElementById("trust").textContent = p.trust_score;
+  document.getElementById("views").textContent = p.views || 0;
+  document.getElementById("likes").textContent = p.likes || 0;
+  document.getElementById("creator").textContent = p.creator_wallet;
+  document.getElementById("created").textContent = p.created_at;
+
+  document.getElementById("score").textContent =
+    "Score: " + score;
+}
+
+/* INIT */
+loadProject();
 
 </script>
 

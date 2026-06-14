@@ -27,16 +27,19 @@
 <script>
 
 /* =========================
-   SUPABASE
+   SUPABASE SETUP
 ========================= */
 
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "YOUR_ANON_KEY";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"; // keep or replace with real anon key
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
 /* =========================
-   TREND SCORE
+   SAFE TREND SCORE ENGINE
 ========================= */
 
 function calculateTrend(p) {
@@ -46,7 +49,7 @@ function calculateTrend(p) {
   const trust = Number(p.trust_score || 0);
 
   const created = new Date(p.created_at || Date.now());
-  const ageHours = (Date.now() - created) / (1000 * 60 * 60);
+  const ageHours = (Date.now() - created.getTime()) / (1000 * 60 * 60);
 
   const recencyBoost =
     ageHours < 24 ? 50 :
@@ -62,7 +65,7 @@ function calculateTrend(p) {
 }
 
 /* =========================
-   LOAD TRENDING
+   LOAD TRENDING FROM SUPABASE
 ========================= */
 
 async function loadTrending() {
@@ -71,66 +74,24 @@ async function loadTrending() {
     .from("launches")
     .select("*");
 
-  if (error) {
+  if (error || !data) {
     document.getElementById("container").innerHTML =
-      "Error loading trending";
+      "<p>❌ Error loading trending projects</p>";
     return;
   }
 
-  let list = data || [];
+  const list = data.map(p => ({
+    ...p,
+    trend_score: calculateTrend(p)
+  }));
 
-  list.forEach(p => {
-    p.trend_score = calculateTrend(p);
-  });
-
-  list.sort((a,b) => b.trend_score - a.trend_score);
+  list.sort((a, b) => b.trend_score - a.trend_score);
 
   render(list);
 }
 
 /* =========================
-   RENDER
-========================= */
-
-function render(list) {
-
-  const container = document.getElementById("container");
-  container.innerHTML = "";
-
-  if (list.length === 0) {
-    container.innerHTML = "<p>No trending projects yet</p>";
-    return;
-  }
-
-  list.forEach(p => {
-
-    let badge = "🚀 Hot";
-    if (p.trend_score > 500) badge = "🔥 Viral";
-    if (p.trend_score > 1000) badge = "👑 Legendary";
-
-    container.innerHTML += `
-      <div style="padding:10px; border-bottom:1px solid #333">
-
-        <h3>${badge} ${p.token_name}</h3>
-
-        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
-        <p><strong>Trend Score:</strong> ${p.trend_score.toFixed(2)}</p>
-
-        <p><strong>Likes:</strong> ${p.likes || 0}</p>
-        <p><strong>Views:</strong> ${p.views || 0}</p>
-        <p><strong>Trust:</strong> ${p.trust_score}</p>
-
-        <button onclick='openProject(${JSON.stringify(p)})'>
-          View
-        </button>
-
-      </div>
-    `;
-  });
-}
-
-/* =========================
-   OPEN PROJECT
+   SAFE NAVIGATION
 ========================= */
 
 function openProject(p) {
@@ -138,7 +99,67 @@ function openProject(p) {
   window.location.href = "project.html";
 }
 
-/* INIT */
+/* =========================
+   RENDER UI
+========================= */
+
+function render(list) {
+
+  const container = document.getElementById("container");
+  container.innerHTML = "";
+
+  if (!list.length) {
+    container.innerHTML = "<p>No trending projects yet</p>";
+    return;
+  }
+
+  list.forEach((p) => {
+
+    const name = p.token_name || "Unknown";
+    const symbol = p.token_symbol || "N/A";
+    const likes = p.likes || 0;
+    const views = p.views || 0;
+    const trust = p.trust_score || 0;
+
+    let badge = "🚀 Hot";
+    if (p.trend_score > 500) badge = "🔥 Viral";
+    if (p.trend_score > 1000) badge = "👑 Legendary";
+
+    const buttonId = `btn_${symbol}_${Math.floor(Math.random() * 10000)}`;
+
+    container.innerHTML += `
+      <div style="padding:12px; border-bottom:1px solid #333">
+
+        <h3>${badge} ${name}</h3>
+
+        <p><strong>Symbol:</strong> ${symbol}</p>
+        <p><strong>Trend Score:</strong> ${p.trend_score.toFixed(2)}</p>
+
+        <p><strong>Likes:</strong> ${likes}</p>
+        <p><strong>Views:</strong> ${views}</p>
+        <p><strong>Trust:</strong> ${trust}</p>
+
+        <button id="${buttonId}">
+          View Project
+        </button>
+
+      </div>
+    `;
+
+    setTimeout(() => {
+      const btn = document.getElementById(buttonId);
+      if (btn) {
+        btn.onclick = () => openProject(p);
+      }
+    }, 0);
+
+  });
+}
+
+/* =========================
+   INIT
+========================= */
+
 loadTrending();
 
 </script>

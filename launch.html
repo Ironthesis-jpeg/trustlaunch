@@ -12,13 +12,36 @@
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-const supabaseClient = window.supabase.createClient(
-  supabaseUrl,
-  supabaseKey
-);
+const supabaseClient =
+  window.supabase.createClient(supabaseUrl, supabaseKey);
+
+/* =========================
+   WALLET CHECK (IMPORTANT FIX)
+========================= */
+
+function getWallet() {
+  const wallet = localStorage.getItem("walletAddress");
+
+  if (!wallet || wallet === "Not Connected") {
+    return null;
+  }
+
+  return wallet;
+}
+
+/* =========================
+   FORM HANDLER
+========================= */
 
 window.reviewLaunch = function(event) {
   event.preventDefault();
+
+  const wallet = getWallet();
+
+  if (!wallet) {
+    alert("Please connect your wallet before launching a project.");
+    return;
+  }
 
   const tokenName = document.getElementById("tokenName").value.trim();
   const tokenSymbol = document.getElementById("tokenSymbol").value.trim();
@@ -31,36 +54,45 @@ window.reviewLaunch = function(event) {
   const totalSupplyRaw = document.getElementById("totalSupply").value;
   const creatorFee = document.getElementById("creatorFee").value;
 
+  /* =========================
+     VALIDATION
+  ========================= */
+
   if (!tokenName || !tokenSymbol) {
     alert("Token Name and Symbol are required.");
     return;
   }
 
-  if (!totalSupplyRaw) {
-    alert("Total Supply is required.");
+  if (!totalSupplyRaw || Number(totalSupplyRaw) <= 0) {
+    alert("Invalid total supply.");
     return;
   }
 
   const totalSupply = Number(totalSupplyRaw);
 
-  if (isNaN(totalSupply) || totalSupply <= 0) {
-    alert("Invalid total supply.");
-    return;
-  }
+  /* =========================
+     STRUCTURED PROJECT OBJECT
+  ========================= */
 
-  // Save all data for review page
   const pendingProject = {
     tokenName,
     tokenSymbol,
-    projectDescription,
-    projectWebsite,
-    projectTwitter,
-    projectLogo,
+    projectDescription: projectDescription || "",
+    projectWebsite: projectWebsite || "",
+    projectTwitter: projectTwitter || "",
+    projectLogo: projectLogo || "",
     projectCategory,
     launchType,
     totalSupply,
-    creatorFee
+    creatorFee: Number(creatorFee),
+    creatorWallet: wallet,
+    createdAt: Date.now(),
+    trustScore: 100
   };
+
+  /* =========================
+     SAVE + REDIRECT
+  ========================= */
 
   localStorage.setItem("pendingProject", JSON.stringify(pendingProject));
 

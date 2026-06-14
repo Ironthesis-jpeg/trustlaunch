@@ -16,22 +16,18 @@
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
+  <a href="watchlist.html">Watchlist</a>
 </nav>
 
 <h1>⭐ My Watchlist</h1>
 
 <section>
-  <h2>Saved Projects</h2>
   <div id="watchlistContainer">
-    <p>Loading watchlist...</p>
+    <p>Loading...</p>
   </div>
 </section>
 
 <script>
-
-/* =========================
-   SUPABASE SETUP
-========================= */
 
 const supabase = window.supabase.createClient(
   "https://uyuokduxqjghmqypheyi.supabase.co",
@@ -62,9 +58,8 @@ async function loadWatchlist() {
 
   const { data, error } = await supabase
     .from("watchlist")
-    .select("*")
-    .eq("wallet", wallet)
-    .order("created_at", { ascending: false });
+    .select("*, launches(*)")
+    .eq("wallet", wallet);
 
   if (error) {
     document.getElementById("watchlistContainer").innerHTML =
@@ -76,10 +71,10 @@ async function loadWatchlist() {
 }
 
 /* =========================
-   REMOVE ITEM
+   REMOVE FROM WATCHLIST
 ========================= */
 
-async function removeItem(symbol) {
+async function removeItem(projectId) {
 
   const wallet = getWallet();
 
@@ -87,49 +82,44 @@ async function removeItem(symbol) {
     .from("watchlist")
     .delete()
     .eq("wallet", wallet)
-    .eq("token_symbol", symbol);
+    .eq("project_id", projectId);
 
   loadWatchlist();
-}
-
-/* =========================
-   VIEW PROJECT
-========================= */
-
-function viewProject(item) {
-  localStorage.setItem("selectedProject", JSON.stringify(item));
-  window.location.href = "project.html";
 }
 
 /* =========================
    RENDER
 ========================= */
 
-function render(list) {
+function render(items) {
 
   const container = document.getElementById("watchlistContainer");
+  container.innerHTML = "";
 
-  if (!list.length) {
+  if (!items.length) {
     container.innerHTML = "<p>No saved projects.</p>";
     return;
   }
 
-  container.innerHTML = "";
+  items.forEach(item => {
 
-  list.forEach(item => {
+    const p = item.launches;
 
     container.innerHTML += `
-      <div>
-        <h3>🚀 ${item.token_name}</h3>
+      <div style="margin-bottom:15px">
 
-        <p>Symbol: ${item.token_symbol}</p>
-        <p>Trust Score: ${item.trust_score}</p>
+        <h3>🚀 ${p.token_name}</h3>
 
-        <button onclick='viewProject(${JSON.stringify(item)})'>
-          View Project
+        <p>Symbol: ${p.token_symbol}</p>
+        <p>Trust Score: ${p.trust_score}</p>
+        <p>Likes: ${p.likes}</p>
+        <p>Views: ${p.views}</p>
+
+        <button onclick='openProject(${JSON.stringify(p)})'>
+          View
         </button>
 
-        <button onclick='removeItem("${item.token_symbol}")'>
+        <button onclick='removeItem("${item.project_id}")'>
           ❌ Remove
         </button>
 
@@ -139,6 +129,16 @@ function render(list) {
   });
 }
 
+/* =========================
+   OPEN PROJECT
+========================= */
+
+function openProject(p) {
+  localStorage.setItem("selectedProject", JSON.stringify(p));
+  window.location.href = "project.html";
+}
+
+/* INIT */
 loadWatchlist();
 
 </script>

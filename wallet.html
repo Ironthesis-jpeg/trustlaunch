@@ -74,33 +74,46 @@
 <script>
 
 /* =========================
-   SAFE WALLET LOAD
+   1. WALLET (SAFE + READY FOR REAL LOGIN)
 ========================= */
 
-const walletAddress =
-  localStorage.getItem("walletAddress") || "Not Connected";
+let walletAddress =
+  localStorage.getItem("walletAddress");
+
+if (!walletAddress) {
+  walletAddress = "Not Connected";
+}
 
 document.getElementById("walletAddress").textContent = walletAddress;
 
 /* =========================
-   LOAD PROJECTS
+   2. LOAD PROJECTS
 ========================= */
 
 const projects =
   JSON.parse(localStorage.getItem("projects") || "[]");
 
-/* IMPORTANT FIX:
-   Support BOTH naming systems
-*/
-const myProjects = projects.filter(p =>
-  (p.creator_wallet || p.creatorWallet || localStorage.getItem("walletAddress")) === walletAddress
-);
-
 /* =========================
-   BASIC STATS
+   3. FILTER MY PROJECTS (FIXED LOGIC)
 ========================= */
 
-document.getElementById("totalProjects").textContent = myProjects.length;
+const myProjects = projects.filter(p => {
+
+  const creator =
+    p.creator_wallet ||
+    p.creatorWallet ||
+    "";
+
+  return creator === walletAddress;
+
+});
+
+/* =========================
+   4. BASIC STATS
+========================= */
+
+document.getElementById("totalProjects").textContent =
+myProjects.length;
 
 let totalLikes = 0;
 let totalViews = 0;
@@ -108,7 +121,10 @@ let totalTrust = 0;
 
 myProjects.forEach(p => {
 
-  const symbol = p.token_symbol || p.tokenSymbol;
+  const symbol =
+    p.token_symbol ||
+    p.tokenSymbol ||
+    "";
 
   totalLikes += Number(localStorage.getItem("likes_" + symbol) || 0);
   totalViews += Number(localStorage.getItem("views_" + symbol) || 0);
@@ -126,10 +142,12 @@ const avgTrust = myProjects.length
 document.getElementById("avgTrust").textContent = avgTrust;
 
 /* =========================
-   REPUTATION SYSTEM
+   5. REPUTATION SYSTEM
 ========================= */
 
-const reputation = Math.min(100, 50 + myProjects.length * 10);
+const reputation =
+Math.min(100, 50 + myProjects.length * 10);
+
 document.getElementById("reputation").textContent = reputation;
 
 let level = 1;
@@ -140,14 +158,19 @@ if (myProjects.length >= 25) level = 5;
 
 document.getElementById("founderLevel").textContent = level;
 
-const xp = (myProjects.length * 100) + (totalLikes * 5) + totalViews;
+const xp =
+(myProjects.length * 100) +
+(totalLikes * 5) +
+totalViews;
+
 document.getElementById("founderXP").textContent = xp;
 
 /* =========================
-   BADGES
+   6. BADGE SYSTEM
 ========================= */
 
 let badge = "⭐ New Founder";
+
 if (myProjects.length >= 5) badge = "🏆 Trusted Founder";
 if (myProjects.length >= 10) badge = "👑 Elite Founder";
 if (myProjects.length >= 25) badge = "🔥 Legendary Founder";
@@ -155,7 +178,7 @@ if (myProjects.length >= 25) badge = "🔥 Legendary Founder";
 document.getElementById("badge").textContent = badge;
 
 /* =========================
-   ACHIEVEMENTS
+   7. ACHIEVEMENTS
 ========================= */
 
 const achievements = [];
@@ -166,10 +189,10 @@ if (totalLikes >= 100) achievements.push("❤️ Community Favorite");
 if (totalViews >= 1000) achievements.push("👀 Viral Creator");
 
 document.getElementById("achievements").innerHTML =
-  achievements.length ? achievements.join("<br>") : "None Yet";
+achievements.length ? achievements.join("<br>") : "None Yet";
 
 /* =========================
-   BEST PROJECT
+   8. BEST PROJECT
 ========================= */
 
 let bestProject = null;
@@ -177,12 +200,19 @@ let bestScore = 0;
 
 myProjects.forEach(p => {
 
-  const symbol = p.token_symbol || p.tokenSymbol;
+  const symbol =
+    p.token_symbol ||
+    p.tokenSymbol ||
+    "";
 
-  const likes = Number(localStorage.getItem("likes_" + symbol) || 0);
-  const views = Number(localStorage.getItem("views_" + symbol) || 0);
+  const likes =
+    Number(localStorage.getItem("likes_" + symbol) || 0);
 
-  const score = likes + views + Number(p.trust_score || p.trustScore || 0);
+  const views =
+    Number(localStorage.getItem("views_" + symbol) || 0);
+
+  const score =
+    likes + views + Number(p.trust_score || p.trustScore || 0);
 
   if (score > bestScore) {
     bestScore = score;
@@ -201,7 +231,7 @@ if (bestProject) {
 }
 
 /* =========================
-   MY PROJECTS LIST
+   9. MY PROJECTS LIST
 ========================= */
 
 const container = document.getElementById("myProjects");
@@ -210,7 +240,7 @@ if (myProjects.length) {
 
   container.innerHTML = "";
 
-  myProjects.reverse().forEach(p => {
+  myProjects.slice().reverse().forEach(p => {
 
     container.innerHTML += `
       <div>

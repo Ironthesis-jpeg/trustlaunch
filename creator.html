@@ -1,14 +1,7 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
-  <meta charset="UTF-8">
-  <title>Creator Profile - TrustLaunch</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-
-<nav>
+<meta charset="UTF-8">
+<title>Creator Profile - TrustLaunch</title><link rel="stylesheet" href="styles.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
@@ -18,291 +11,260 @@
   <a href="trending.html">Trending</a>
   <a href="notifications.html">Notifications</a>
   <a href="watchlist.html">Watchlist</a>
-</nav>
+</nav><h1>👤 Creator Profile</h1><section><p><strong>Wallet:</strong> <span id="walletAddress">Loading...</span></p><p><strong>Projects Launched:</strong> <span id="projectsCount">0</span></p><p><strong>Founder Reputation:</strong> <span id="founderReputation">0</span></p><p><strong>Badge:</strong> <span id="creatorBadge">-</span></p><p><strong>Founder Level:</strong> <span id="creatorLevel">0</span></p><p><strong>Creator Score:</strong> <span id="creatorScore">0</span></p><p><strong>Hall Of Fame Projects:</strong> <span id="hofProjects">0</span></p><p><strong>Latest Launch:</strong> <span id="latestLaunch">-</span></p></section><section><h2>🚀 Projects By Creator</h2><div id="creatorProjects">
+Loading...
+</div></section><footer>
+<p>TrustLaunch</p>
+<p>Build trust before hype.</p>
+</footer><script>
 
-<h1>👤 Creator Profile</h1>
+/* =========================
+   SUPABASE
+========================= */
 
-<section>
+const supabaseUrl =
+"https://uyuokduxqjghmqypheyi.supabase.co";
 
-  <p>
-    <strong>Wallet:</strong>
-    <span id="walletAddress"></span>
-  </p>
+const supabaseKey =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-  <p>
-    <strong>Projects Launched:</strong>
-    <span id="projectsCount"></span>
-  </p>
+const supabase =
+window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
-  <p>
-    <strong>Founder Reputation:</strong>
-    <span id="founderReputation"></span>
-  </p>
+/* =========================
+   GET WALLET FROM URL
+========================= */
 
-  <p>
-    <strong>Badge:</strong>
-    <span id="creatorBadge"></span>
-  </p>
-
-  <p>
-    <strong>Founder Level:</strong>
-    <span id="creatorLevel"></span>
-  </p>
-
-  <p>
-    <strong>Creator Score:</strong>
-    <span id="creatorScore"></span>
-  </p>
-
-  <p>
-    <strong>Hall Of Fame Projects:</strong>
-    <span id="hofProjects"></span>
-  </p>
-
-  <p>
-    <strong>Latest Launch:</strong>
-    <span id="latestLaunch"></span>
-  </p>
-
-</section>
-
-<section>
-
-  <h2>🚀 Projects By Creator</h2>
-
-  <div id="creatorProjects"></div>
-
-</section>
-
-<footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer>
-
-<script>
+const params =
+new URLSearchParams(window.location.search);
 
 const creatorWallet =
-  localStorage.getItem("selectedCreator");
+params.get("wallet");
 
-const projects =
-  JSON.parse(localStorage.getItem("projects")) || [];
+/* =========================
+   LOAD CREATOR
+========================= */
 
-const creatorProjects =
-  projects.filter(project =>
-    project.creatorWallet === creatorWallet
-  );
+async function loadCreator() {
 
-document.getElementById("walletAddress").textContent =
-  creatorWallet || "Unknown";
+  if (!creatorWallet) {
 
-document.getElementById("projectsCount").textContent =
-  creatorProjects.length;
+    document.getElementById(
+      "creatorProjects"
+    ).innerHTML =
+    "<p>Creator not found.</p>";
 
-/* Reputation */
+    return;
+  }
 
-let reputation = 50;
+  document.getElementById(
+    "walletAddress"
+  ).textContent =
+  creatorWallet;
 
-reputation += creatorProjects.length * 10;
+  const { data, error } =
+  await supabase
+    .from("launches")
+    .select("*")
+    .eq("creator_wallet", creatorWallet)
+    .order("created_at", {
+      ascending: false
+    });
 
-if (reputation > 100) {
-  reputation = 100;
+  if (error) {
+
+    console.error(error);
+
+    document.getElementById(
+      "creatorProjects"
+    ).innerHTML =
+    "<p>Error loading creator.</p>";
+
+    return;
+  }
+
+  const projects = data || [];
+
+  renderCreator(projects);
 }
 
-document.getElementById("founderReputation").textContent =
+/* =========================
+   RENDER CREATOR
+========================= */
+
+function renderCreator(projects) {
+
+  document.getElementById(
+    "projectsCount"
+  ).textContent =
+  projects.length;
+
+  let reputation =
+    Math.min(
+      100,
+      50 + (projects.length * 10)
+    );
+
+  document.getElementById(
+    "founderReputation"
+  ).textContent =
   reputation;
 
-/* Badge */
+  let badge =
+    "⭐ New Founder";
 
-let badge = "⭐ New Founder";
+  if (projects.length >= 5)
+    badge = "🏆 Trusted Founder";
 
-if (creatorProjects.length >= 5)
-  badge = "🏆 Trusted Founder";
+  if (projects.length >= 10)
+    badge = "👑 Elite Founder";
 
-if (creatorProjects.length >= 10)
-  badge = "👑 Elite Founder";
+  if (projects.length >= 25)
+    badge = "🔥 Legendary Founder";
 
-if (creatorProjects.length >= 25)
-  badge = "🔥 Legendary Founder";
-
-document.getElementById("creatorBadge").textContent =
+  document.getElementById(
+    "creatorBadge"
+  ).textContent =
   badge;
 
-/* Founder Level */
+  let level = 1;
 
-let level = 1;
+  if (projects.length >= 3) level = 2;
+  if (projects.length >= 5) level = 3;
+  if (projects.length >= 10) level = 4;
+  if (projects.length >= 25) level = 5;
 
-if (creatorProjects.length >= 3)
-  level = 2;
-
-if (creatorProjects.length >= 5)
-  level = 3;
-
-if (creatorProjects.length >= 10)
-  level = 4;
-
-if (creatorProjects.length >= 25)
-  level = 5;
-
-document.getElementById("creatorLevel").textContent =
+  document.getElementById(
+    "creatorLevel"
+  ).textContent =
   level;
 
-/* Hall Of Fame Projects */
+  const hofProjects =
+  projects.filter(
+    p =>
+      Number(p.trust_score || 0) >= 95
+  ).length;
 
-const hofProjects =
-creatorProjects.filter(project => {
+  document.getElementById(
+    "hofProjects"
+  ).textContent =
+  hofProjects;
 
-const ratings =
-JSON.parse(
-localStorage.getItem(
-"ratings_" +
-project.tokenSymbol
-) || "[]"
-);
+  const avgTrust =
+  projects.length
+  ?
+  projects.reduce(
+    (sum,p)=>
+    sum +
+    Number(p.trust_score || 0),
+    0
+  ) / projects.length
+  :
+  0;
 
-const avgRating =
-ratings.length
-?
-ratings.reduce(
-(a,b)=>a+b,
-0
-) / ratings.length
-:
-0;
+  const creatorScore =
+  Math.round(
+    avgTrust +
+    reputation +
+    (projects.length * 5) +
+    (hofProjects * 25)
+  );
 
-const rankScore =
-Number(project.trustScore || 0) +
-reputation +
-(creatorProjects.length * 5);
+  document.getElementById(
+    "creatorScore"
+  ).textContent =
+  creatorScore;
 
-return (
-Number(project.trustScore) >= 95 &&
-rankScore >= 200 &&
-avgRating >= 4 &&
-reputation >= 80
-);
+  if (projects.length) {
 
-}).length;
+    document.getElementById(
+      "latestLaunch"
+    ).textContent =
+    new Date(
+      projects[0].created_at
+    ).toLocaleString();
+  }
 
-document.getElementById(
-"hofProjects"
-).textContent =
-hofProjects;
+  const container =
+  document.getElementById(
+    "creatorProjects"
+  );
 
-/* Creator Score */
+  container.innerHTML = "";
 
-const avgTrust =
-creatorProjects.length
-?
-creatorProjects.reduce(
-(sum,p)=>
-sum +
-Number(p.trustScore || 0),
-0
-) /
-creatorProjects.length
-:
-0;
+  if (!projects.length) {
 
-const creatorScore =
-Math.round(
-avgTrust +
-reputation +
-(creatorProjects.length * 5) +
-(hofProjects * 25)
-);
-
-document.getElementById(
-"creatorScore"
-).textContent =
-creatorScore;
-
-/* Latest Launch */
-
-if (creatorProjects.length > 0) {
-
-  const latestProject =
-    creatorProjects
-      .slice()
-      .sort((a, b) => b.createdAt - a.createdAt)[0];
-
-  document.getElementById("latestLaunch").textContent =
-    latestProject.createdAt
-      ? new Date(latestProject.createdAt).toLocaleString()
-      : "Unknown";
-
-}
-
-/* Creator Projects */
-
-const container =
-  document.getElementById("creatorProjects");
-
-if (creatorProjects.length === 0) {
-
-  container.innerHTML =
+    container.innerHTML =
     "<p>No projects found.</p>";
 
-}
+    return;
+  }
 
-creatorProjects
-  .slice()
-  .sort((a, b) => b.createdAt - a.createdAt)
-  .forEach(project => {
-
-    const launchTime =
-      project.createdAt
-        ? new Date(project.createdAt).toLocaleString()
-        : "Unknown";
+  projects.forEach(project => {
 
     container.innerHTML += `
+
       <div>
 
-        <h3>🚀 ${project.tokenName}</h3>
+        <h3>
+          🚀 ${project.token_name}
+        </h3>
 
         <p>
           <strong>Symbol:</strong>
-          ${project.tokenSymbol}
+          ${project.token_symbol}
         </p>
 
         <p>
           <strong>Launch Type:</strong>
-          ${project.launchType}
+          ${project.launch_type}
         </p>
 
         <p>
           <strong>Trust Score:</strong>
-          ${project.trustScore}
+          ${project.trust_score}
         </p>
 
         <p>
           <strong>Launch Date:</strong>
-          ${launchTime}
+          ${new Date(
+            project.created_at
+          ).toLocaleString()}
         </p>
 
-        <button onclick='viewProject(${JSON.stringify(project)})'>
+        <button
+          onclick="viewProject('${project.id}')">
+
           View Project
+
         </button>
 
         <hr>
 
       </div>
+
     `;
-
   });
-
-function viewProject(project) {
-
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(project)
-  );
-
-  window.location.href =
-    "project.html";
-
 }
 
-</script>
+/* =========================
+   VIEW PROJECT
+========================= */
 
-</body>
+function viewProject(id) {
+
+  window.location.href =
+  "project.html?id=" + id;
+}
+
+/* =========================
+   INIT
+========================= */
+
+loadCreator();
+
+</script></body>
 </html>

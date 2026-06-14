@@ -1,108 +1,94 @@
-/* =========================
-   TRUSTLAUNCH WALLET CONNECT
-========================= */
+let provider;
+let signer;
+let userAddress;
 
-let currentWallet = null;
-
-/* Detect Ethereum provider */
-function getProvider() {
-  if (window.ethereum) return window.ethereum;
-  return null;
-}
-
-/* =========================
-   CONNECT WALLET (MetaMask etc.)
-========================= */
-
+// ---------------------------
+// CONNECT WALLET
+// ---------------------------
 async function connectWallet() {
   try {
+    const WalletConnectProvider =
+      window.WalletConnectProvider.default;
 
-    const provider = getProvider();
+    const providerOptions = {
+      walletconnect: {
+        package: WalletConnectProvider,
+        options: {
+          rpc: {
+            1: "https://mainnet.infura.io/v3/",
+            8453: "https://mainnet.base.org",
+            56: "https://bsc-dataseed.binance.org",
+            137: "https://polygon-rpc.com"
+          }
+        }
+      }
+    };
 
-    if (!provider) {
-      alert("No wallet found. Install MetaMask or use WalletConnect compatible wallet.");
-      return;
-    }
-
-    // Request accounts
-    const accounts = await provider.request({
-      method: "eth_requestAccounts"
+    const web3Modal = new window.Web3Modal.default({
+      cacheProvider: false,
+      providerOptions
     });
 
-    currentWallet = accounts[0];
+    const externalProvider = await web3Modal.connect();
 
-    document.getElementById("walletAddress").textContent = currentWallet;
+    provider = new ethers.providers.Web3Provider(externalProvider);
+    signer = provider.getSigner();
 
-    localStorage.setItem("walletAddress", currentWallet);
+    userAddress = await signer.getAddress();
+    const network = await provider.getNetwork();
 
-    await signLoginMessage();
+    // SAVE WALLET
+    localStorage.setItem("walletAddress", userAddress);
+    localStorage.setItem("chainId", network.chainId);
 
+    alert("Wallet Connected:\n" + userAddress);
+
+    updateWalletUI();
+
+    return userAddress;
   } catch (err) {
     console.error(err);
     alert("Wallet connection failed");
   }
 }
 
-/* =========================
-   SIGN LOGIN MESSAGE (AUTH)
-========================= */
-
-async function signLoginMessage() {
-  try {
-
-    const provider = getProvider();
-
-    const message = `
-TrustLaunch Login Verification
-
-Wallet: ${currentWallet}
-Time: ${new Date().toISOString()}
-    `;
-
-    const signature = await provider.request({
-      method: "personal_sign",
-      params: [message, currentWallet]
-    });
-
-    localStorage.setItem("walletSignature", signature);
-    localStorage.setItem("walletLoggedIn", "true");
-
-    document.getElementById("status").textContent =
-      "Wallet connected & verified ✅";
-
-  } catch (err) {
-    console.error(err);
-    alert("Signature rejected. Login cancelled.");
-  }
-}
-
-/* =========================
-   DISCONNECT WALLET
-========================= */
-
+// ---------------------------
+// DISCONNECT WALLET
+// ---------------------------
 function disconnectWallet() {
   localStorage.removeItem("walletAddress");
-  localStorage.removeItem("walletSignature");
-  localStorage.removeItem("walletLoggedIn");
+  localStorage.removeItem("chainId");
 
-  currentWallet = null;
+  userAddress = null;
 
-  document.getElementById("walletAddress").textContent = "Not Connected";
-  document.getElementById("status").textContent = "Disconnected";
+  updateWalletUI();
 }
 
-/* =========================
-   AUTO LOAD SESSION
-========================= */
-
-function loadWalletSession() {
-  const saved = localStorage.getItem("walletAddress");
-
-  if (saved) {
-    currentWallet = saved;
-    const el = document.getElementById("walletAddress");
-    if (el) el.textContent = saved;
-  }
+// ---------------------------
+// GET WALLET
+// ---------------------------
+function getWallet() {
+  return localStorage.getItem("walletAddress");
 }
 
-window.addEventListener("load", loadWalletSession);
+// ---------------------------
+// UI UPDATE
+// ---------------------------
+function updateWalletUI() {
+  const el = document.getElementById("walletAddress");
+
+  if (!el) return;
+
+  const wallet = getWallet();
+
+  el.innerText = wallet
+    ? wallet.slice(0, 6) + "..." + wallet.slice(-4)
+    : "Not Connected";
+}
+
+// ---------------------------
+// AUTO INIT
+// ---------------------------
+window.addEventListener("load", () => {
+  updateWalletUI();
+});

@@ -82,28 +82,36 @@ function calculateTrend(p) {
    LOAD TRENDING
 ========================= */
 
-async function loadTrending() {
+async function updateTrendingScore(project) {
 
-  const { data, error } = await supabase
+  const created = new Date(project.created_at || Date.now());
+  const ageHours = (Date.now() - created.getTime()) / (1000 * 60 * 60);
+
+  let recencyBoost = 0;
+
+  if (ageHours < 24) recencyBoost = 50;
+  else if (ageHours < 72) recencyBoost = 20;
+
+  const likes = Number(project.likes || 0);
+  const views = Number(project.views || 0);
+  const trust = Number(project.trust_score || 0);
+
+  const score =
+    likes * 3 +
+    views * 0.5 +
+    trust * 1.2 +
+    recencyBoost;
+
+  const { error } = await supabase
     .from("launches")
-    .select("*");
+    .update({ trending_score: score })
+    .eq("id", project.id);
 
   if (error) {
-    document.getElementById("container").innerHTML =
-      "<p>Error loading trending</p>";
-    return;
+    console.log("Trending update error:", error.message);
   }
 
-  let list = data || [];
-
-  list = list.map(p => ({
-    ...p,
-    trend_score: calculateTrend(p)
-  }));
-
-  list.sort((a, b) => b.trend_score - a.trend_score);
-
-  render(list.slice(0, 20));
+  return score;
 }
 
 /* =========================

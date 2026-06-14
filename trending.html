@@ -2,8 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Trending Projects - TrustLaunch</title>
+<title>Trending - TrustLaunch</title>
+
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -12,308 +15,131 @@
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
-  <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
 </nav>
 
 <h1>🔥 Trending Projects</h1>
 
-<section>
-
-  <h2>📈 Trending Now</h2>
-
-  <div id="trendingNow">
-    <p>No trending projects yet.</p>
-  </div>
-
-</section>
-
-<section>
-
-  <h2>❤️ Most Liked</h2>
-
-  <div id="mostLiked">
-    <p>No liked projects yet.</p>
-  </div>
-
-</section>
-
-<section>
-
-  <h2>👀 Most Viewed</h2>
-
-  <div id="mostViewed">
-    <p>No viewed projects yet.</p>
-  </div>
-
-</section>
-
-<section>
-
-  <h2>⭐ Highest Rated</h2>
-
-  <div id="highestRated">
-    <p>No ratings yet.</p>
-  </div>
-
-</section>
-
-<footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer>
+<div id="container">
+  <p>Loading trending projects...</p>
+</div>
 
 <script>
 
-const projects =
-  JSON.parse(
-    localStorage.getItem("projects")
-  ) || [];
+/* =========================
+   SUPABASE
+========================= */
 
-/* Build Stats */
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "YOUR_ANON_KEY";
 
-const scoredProjects =
-  projects.map(project => {
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    const likes =
-      Number(
-        localStorage.getItem(
-          "likes_" +
-          project.tokenSymbol
-        ) || 0
-      );
+/* =========================
+   TREND SCORE
+========================= */
 
-    const views =
-      Number(
-        localStorage.getItem(
-          "views_" +
-          project.tokenSymbol
-        ) || 0
-      );
+function calculateTrend(p) {
 
-    const ratings =
-      JSON.parse(
-        localStorage.getItem(
-          "ratings_" +
-          project.tokenSymbol
-        ) || "[]"
-      );
+  const likes = Number(p.likes || 0);
+  const views = Number(p.views || 0);
+  const trust = Number(p.trust_score || 0);
 
-    const avgRating =
-      ratings.length
-      ?
-      ratings.reduce(
-        (a,b) => a + b,
-        0
-      ) / ratings.length
-      :
-      0;
+  const created = new Date(p.created_at || Date.now());
+  const ageHours = (Date.now() - created) / (1000 * 60 * 60);
 
-    const trendingScore =
-      likes * 5 +
-      views +
-      avgRating * 20 +
-      Number(project.trustScore || 0);
+  const recencyBoost =
+    ageHours < 24 ? 50 :
+    ageHours < 72 ? 20 :
+    0;
 
-    return {
-      ...project,
-      likes,
-      views,
-      avgRating,
-      trendingScore
-    };
+  return (
+    likes * 3 +
+    views * 0.5 +
+    trust * 1.2 +
+    recencyBoost
+  );
+}
 
+/* =========================
+   LOAD TRENDING
+========================= */
+
+async function loadTrending() {
+
+  const { data, error } = await supabase
+    .from("launches")
+    .select("*");
+
+  if (error) {
+    document.getElementById("container").innerHTML =
+      "Error loading trending";
+    return;
+  }
+
+  let list = data || [];
+
+  list.forEach(p => {
+    p.trend_score = calculateTrend(p);
   });
 
-/* Trending Now */
+  list.sort((a,b) => b.trend_score - a.trend_score);
 
-const trendingNow =
-  scoredProjects
-    .slice()
-    .sort(
-      (a,b) =>
-      b.trendingScore -
-      a.trendingScore
-    )
-    .slice(0,10);
+  render(list);
+}
 
-const trendingContainer =
-  document.getElementById(
-    "trendingNow"
-  );
+/* =========================
+   RENDER
+========================= */
 
-if(trendingNow.length){
+function render(list) {
 
-  trendingContainer.innerHTML = "";
+  const container = document.getElementById("container");
+  container.innerHTML = "";
 
-  trendingNow.forEach(
-    (project,index) => {
+  if (list.length === 0) {
+    container.innerHTML = "<p>No trending projects yet</p>";
+    return;
+  }
 
-      trendingContainer.innerHTML += `
+  list.forEach(p => {
 
-      <div>
+    let badge = "🚀 Hot";
+    if (p.trend_score > 500) badge = "🔥 Viral";
+    if (p.trend_score > 1000) badge = "👑 Legendary";
 
-        <h3>
-          #${index + 1}
-          🔥 ${project.tokenName}
-        </h3>
+    container.innerHTML += `
+      <div style="padding:10px; border-bottom:1px solid #333">
 
-        <p>
-          Trending Score:
-          ${project.trendingScore.toFixed(0)}
-        </p>
+        <h3>${badge} ${p.token_name}</h3>
 
-        <p>
-          Likes:
-          ${project.likes}
-        </p>
+        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
+        <p><strong>Trend Score:</strong> ${p.trend_score.toFixed(2)}</p>
 
-        <p>
-          Views:
-          ${project.views}
-        </p>
+        <p><strong>Likes:</strong> ${p.likes || 0}</p>
+        <p><strong>Views:</strong> ${p.views || 0}</p>
+        <p><strong>Trust:</strong> ${p.trust_score}</p>
 
-        <button
-          onclick='viewProject(
-            ${JSON.stringify(project)}
-          )'
-        >
-          View Project
+        <button onclick='openProject(${JSON.stringify(p)})'>
+          View
         </button>
 
-        <hr>
-
       </div>
-
-      `;
-
-    });
-
-}
-
-/* Most Liked */
-
-const likedContainer =
-  document.getElementById(
-    "mostLiked"
-  );
-
-const likedProjects =
-  scoredProjects
-    .slice()
-    .sort(
-      (a,b) =>
-      b.likes - a.likes
-    )
-    .slice(0,5);
-
-if(likedProjects.length){
-
-  likedContainer.innerHTML = "";
-
-  likedProjects.forEach(project => {
-
-    likedContainer.innerHTML += `
-
-      <p>
-        ❤️ ${project.tokenName}
-        (${project.likes} likes)
-      </p>
-
     `;
-
   });
-
 }
 
-/* Most Viewed */
+/* =========================
+   OPEN PROJECT
+========================= */
 
-const viewedContainer =
-  document.getElementById(
-    "mostViewed"
-  );
-
-const viewedProjects =
-  scoredProjects
-    .slice()
-    .sort(
-      (a,b) =>
-      b.views - a.views
-    )
-    .slice(0,5);
-
-if(viewedProjects.length){
-
-  viewedContainer.innerHTML = "";
-
-  viewedProjects.forEach(project => {
-
-    viewedContainer.innerHTML += `
-
-      <p>
-        👀 ${project.tokenName}
-        (${project.views} views)
-      </p>
-
-    `;
-
-  });
-
+function openProject(p) {
+  localStorage.setItem("selectedProject", JSON.stringify(p));
+  window.location.href = "project.html";
 }
 
-/* Highest Rated */
-
-const ratedContainer =
-  document.getElementById(
-    "highestRated"
-  );
-
-const ratedProjects =
-  scoredProjects
-    .filter(
-      p => p.avgRating > 0
-    )
-    .sort(
-      (a,b) =>
-      b.avgRating -
-      a.avgRating
-    )
-    .slice(0,5);
-
-if(ratedProjects.length){
-
-  ratedContainer.innerHTML = "";
-
-  ratedProjects.forEach(project => {
-
-    ratedContainer.innerHTML += `
-
-      <p>
-        ⭐ ${project.tokenName}
-        (${project.avgRating.toFixed(1)})
-      </p>
-
-    `;
-
-  });
-
-}
-
-function viewProject(project){
-
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(project)
-  );
-
-  window.location.href =
-    "project.html";
-
-}
+/* INIT */
+loadTrending();
 
 </script>
 

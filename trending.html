@@ -1,44 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
-<script src="wallet.js"></script>
 <meta charset="UTF-8">
-async function updateTrendingScore(project) {
-
-  const created = new Date(project.created_at || Date.now());
-  const ageHours = (Date.now() - created.getTime()) / (1000 * 60 * 60);
-
-  let recencyBoost = 0;
-
-  if (ageHours < 24) recencyBoost = 50;
-  else if (ageHours < 72) recencyBoost = 20;
-
-  const likes = Number(project.likes || 0);
-  const views = Number(project.views || 0);
-  const trust = Number(project.trust_score || 0);
-
-  const score =
-    likes * 3 +
-    views * 0.5 +
-    trust * 1.2 +
-    recencyBoost;
-
-  const { error } = await supabase
-    .from("launches")
-    .update({ trending_score: score })
-    .eq("id", project.id);
-
-  if (error) {
-    console.log("Trending update error:", error.message);
-  }
-
-  return score;
-}
 <title>Trending - TrustLaunch</title>
 
 <link rel="stylesheet" href="styles.css">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
+<script src="wallet.js"></script>
+
 </head>
 
 <body>
@@ -50,12 +21,8 @@ async function updateTrendingScore(project) {
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 
-  <!-- WALLET CONNECT BUTTON -->
-  <button onclick="connectWallet()">
-    Connect Wallet
-  </button>
+  <button onclick="connectWallet()">Connect Wallet</button>
 
-  <!-- SHOW CONNECTED WALLET -->
   <span id="walletDisplay" style="margin-left:10px;">
     Not Connected
   </span>
@@ -79,7 +46,7 @@ const supabase = window.supabase.createClient(
 );
 
 /* =========================
-   VIRAL SCORE ENGINE
+   TREND SCORE CALCULATOR
 ========================= */
 
 function calculateTrend(p) {
@@ -91,22 +58,15 @@ function calculateTrend(p) {
   const created = new Date(p.created_at || Date.now());
   const ageHours = (Date.now() - created.getTime()) / (1000 * 60 * 60);
 
-  /* 🔥 recency boost */
   let recencyBoost = 0;
 
   if (ageHours < 6) recencyBoost = 80;
   else if (ageHours < 24) recencyBoost = 50;
   else if (ageHours < 72) recencyBoost = 20;
 
-  /* 🔥 viral formula */
   const engagement = (likes * 4) + (views * 0.5);
 
-  const score =
-    engagement +
-    trust * 1.5 +
-    recencyBoost;
-
-  return score;
+  return engagement + (trust * 1.5) + recencyBoost;
 }
 
 /* =========================
@@ -125,33 +85,21 @@ async function loadTrending() {
     return;
   }
 
-  const list = data || [];
+  let list = data || [];
 
-  // ALWAYS recompute trending score to keep it fresh
-  for (let p of list) {
-    await updateTrendingScore(p);
-  }
+  // compute score locally (FAST — no DB spam)
+  list = list.map(p => ({
+    ...p,
+    trend_score: calculateTrend(p)
+  }));
 
-  // re-fetch updated data
-  const { data: updated } = await supabase
-    .from("launches")
-    .select("*")
-    .order("trending_score", { ascending: false });
+  list.sort((a, b) => b.trend_score - a.trend_score);
 
-  render(updated || []);
+  render(list);
 }
 
 /* =========================
-   OPEN PROJECT
-========================= */
-
-function openProject(p) {
-  localStorage.setItem("selectedProject", JSON.stringify(p));
-  window.location.href = "project.html";
-}
-
-/* =========================
-   RENDER
+   RENDER UI
 ========================= */
 
 function render(list) {
@@ -191,8 +139,24 @@ function render(list) {
   });
 }
 
-/* INIT */
+/* =========================
+   OPEN PROJECT
+========================= */
+
+function openProject(p) {
+  localStorage.setItem("selectedProject", JSON.stringify(p));
+  window.location.href = "project.html";
+}
+
+/* =========================
+   AUTO REFRESH (REAL TIME FEEL)
+========================= */
+
 loadTrending();
+
+setInterval(() => {
+  loadTrending();
+}, 5000);
 
 </script>
 

@@ -1,31 +1,19 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
-<title>Explore Projects - TrustLaunch</title>
-
-<link rel="stylesheet" href="styles.css">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-
-<body>
-
-<nav>
+<title>Explore Projects - TrustLaunch</title><link rel="stylesheet" href="styles.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
-</nav>
-
-<h1>🚀 Explore Projects</h1>
-
-<section>
-
-<input id="searchInput" type="text"
+</nav><h1>🚀 Explore Projects</h1><section><input
+id="searchInput"
+type="text"
 placeholder="Search token name or symbol"
-onkeyup="renderProjects()">
+onkeyup="renderProjects()"
+
+«»
 
 <br><br>
 
@@ -37,21 +25,21 @@ onkeyup="renderProjects()">
 <br><br>
 
 <div id="projectsContainer">
-  <p>Loading trending projects...</p>
-</div>
-
-</section>
-
-<script>
+  <p>Loading projects...</p>
+</div></section><script>
 
 /* =========================
-   SUPABASE SETUP
+   SUPABASE
 ========================= */
 
-const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+const supabaseUrl =
+"https://uyuokduxqjghmqypheyi.supabase.co";
 
-const supabase = window.supabase.createClient(
+const supabaseKey =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+
+const supabase =
+window.supabase.createClient(
   supabaseUrl,
   supabaseKey
 );
@@ -64,24 +52,37 @@ let projects = [];
 let currentFilter = "All";
 
 /* =========================
-   LOAD FROM SUPABASE (TRENDING ORDER)
+   LOAD PROJECTS
 ========================= */
 
 async function loadProjects() {
 
-  const { data, error } = await supabase
-    .from("launches")
-    .select("*")
-    .order("trending_score", { ascending: false });
+  const container =
+    document.getElementById("projectsContainer");
+
+  container.innerHTML =
+    "<p>Loading projects...</p>";
+
+  const { data, error } =
+    await supabase
+      .from("launches")
+      .select("*")
+      .order("created_at", {
+        ascending: false
+      });
 
   if (error) {
-    console.log(error);
-    document.getElementById("projectsContainer").innerHTML =
-      "<p>Error loading projects</p>";
+
+    console.error(error);
+
+    container.innerHTML =
+      "<p>Error loading projects.</p>";
+
     return;
   }
 
   projects = data || [];
+
   renderProjects();
 }
 
@@ -89,8 +90,10 @@ async function loadProjects() {
    FILTER
 ========================= */
 
-function setFilter(f) {
-  currentFilter = f;
+function setFilter(filter) {
+
+  currentFilter = filter;
+
   renderProjects();
 }
 
@@ -98,61 +101,115 @@ function setFilter(f) {
    VIEW PROJECT
 ========================= */
 
-function viewProject(p) {
-  localStorage.setItem("selectedProject", JSON.stringify(p));
-  window.location.href = "project.html";
+function viewProject(projectId) {
+
+  window.location.href =
+    "project.html?id=" + projectId;
 }
 
 /* =========================
-   RENDER
+   RENDER PROJECTS
 ========================= */
 
 function renderProjects() {
 
-  const container = document.getElementById("projectsContainer");
-  const search = document.getElementById("searchInput").value.toLowerCase();
+  const container =
+    document.getElementById("projectsContainer");
+
+  const search =
+    document.getElementById("searchInput")
+    .value
+    .toLowerCase();
 
   container.innerHTML = "";
 
   let list = [...projects];
 
-  /* filter */
-  list = list.filter(p => {
+  list = list.filter(project => {
+
+    const tokenName =
+      (project.token_name || "")
+      .toLowerCase();
+
+    const tokenSymbol =
+      (project.token_symbol || "")
+      .toLowerCase();
 
     const matchesSearch =
-      (p.token_name || "").toLowerCase().includes(search) ||
-      (p.token_symbol || "").toLowerCase().includes(search);
+      tokenName.includes(search) ||
+      tokenSymbol.includes(search);
 
     const matchesFilter =
       currentFilter === "All" ||
-      p.launch_type === currentFilter;
+      project.launch_type === currentFilter;
 
     return matchesSearch && matchesFilter;
   });
 
-  if (list.length === 0) {
-    container.innerHTML = "<p>No projects found</p>";
+  if (!list.length) {
+
+    container.innerHTML =
+      "<p>No projects found.</p>";
+
     return;
   }
 
-  list.forEach(p => {
+  list.forEach(project => {
+
+    const trendScore =
+      (Number(project.likes || 0) * 3) +
+      (Number(project.views || 0) * 0.5) +
+      Number(project.trust_score || 0);
 
     container.innerHTML += `
+
       <div>
-        <h3>🔥 ${p.token_name}</h3>
 
-        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
-        <p><strong>Type:</strong> ${p.launch_type}</p>
-        <p><strong>Trust:</strong> ${p.trust_score}</p>
-        <p><strong>Trending Score:</strong> ${p.trending_score}</p>
-        <p><strong>Creator:</strong> ${p.creator_wallet || "Unknown"}</p>
+        <h3>🚀 ${project.token_name}</h3>
 
-        <button onclick='viewProject(${JSON.stringify(p)})'>
+        <p>
+          <strong>Symbol:</strong>
+          ${project.token_symbol}
+        </p>
+
+        <p>
+          <strong>Type:</strong>
+          ${project.launch_type}
+        </p>
+
+        <p>
+          <strong>Trust Score:</strong>
+          ${project.trust_score || 0}
+        </p>
+
+        <p>
+          <strong>Views:</strong>
+          ${project.views || 0}
+        </p>
+
+        <p>
+          <strong>Likes:</strong>
+          ${project.likes || 0}
+        </p>
+
+        <p>
+          <strong>Trend Score:</strong>
+          ${trendScore.toFixed(0)}
+        </p>
+
+        <p>
+          <strong>Creator:</strong>
+          ${project.creator_wallet || "Unknown"}
+        </p>
+
+        <button onclick="viewProject('${project.id}')">
           View Project
         </button>
 
         <hr>
+
       </div>
+
     `;
   });
 }
@@ -163,7 +220,5 @@ function renderProjects() {
 
 loadProjects();
 
-</script>
-
-</body>
+</script></body>
 </html>

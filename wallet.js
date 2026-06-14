@@ -32,14 +32,16 @@ async function connectWallet() {
 
     localStorage.setItem("walletAddress", currentWallet);
 
-    /* NEW: ensure user profile exists */
+    updateWalletUI();
+
     if (supabase) {
+
       await ensureProfile(currentWallet);
+      await syncReputation(currentWallet); // 🔥 NEW
+
     }
 
     alert("Wallet Connected: " + currentWallet);
-
-    updateWalletUI();
 
   } catch (err) {
     console.error(err);
@@ -48,7 +50,7 @@ async function connectWallet() {
 }
 
 /* =========================
-   ENSURE PROFILE EXISTS (NEW CORE FEATURE)
+   ENSURE PROFILE EXISTS
 ========================= */
 
 async function ensureProfile(wallet) {
@@ -68,7 +70,7 @@ async function ensureProfile(wallet) {
 
     if (!data) {
 
-      await supabase
+      const { error: insertError } = await supabase
         .from("profiles")
         .insert([
           {
@@ -81,11 +83,64 @@ async function ensureProfile(wallet) {
           }
         ]);
 
-      console.log("Profile created for:", wallet);
+      if (insertError) {
+        console.log("Profile insert error:", insertError.message);
+      } else {
+        console.log("Profile created for:", wallet);
+      }
     }
 
   } catch (err) {
     console.log("ensureProfile failed:", err.message);
+  }
+}
+
+/* =========================
+   REPUTATION ENGINE (SUPABASE BASED)
+========================= */
+
+async function syncReputation(wallet) {
+
+  try {
+
+    const { data: projects } = await supabase
+      .from("launches")
+      .select("likes, views, creator_wallet")
+      .eq("creator_wallet", wallet);
+
+    if (!projects) return;
+
+    let reputation = 50;
+
+    const launches = projects.length;
+
+    let totalLikes = 0;
+    let totalViews = 0;
+
+    projects.forEach(p => {
+      totalLikes += Number(p.likes || 0);
+      totalViews += Number(p.views || 0);
+    });
+
+    reputation += launches * 5;
+    reputation += Math.floor(totalLikes / 10) * 2;
+    reputation += Math.floor(totalViews / 100) * 2;
+
+    if (reputation > 100) reputation = 100;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ reputation })
+      .eq("wallet", wallet);
+
+    if (error) {
+      console.log("Reputation update error:", error.message);
+    } else {
+      console.log("Reputation synced:", reputation);
+    }
+
+  } catch (err) {
+    console.log("syncReputation failed:", err.message);
   }
 }
 
@@ -118,17 +173,24 @@ window.addEventListener("load", async () => {
 
   updateWalletUI();
 
-  /* optional auto-detect existing MetaMask session */
   if (window.ethereum) {
+
     try {
+
       const accounts = await window.ethereum.request({
         method: "eth_accounts"
       });
 
       if (accounts && accounts.length > 0) {
+
         currentWallet = accounts[0];
         localStorage.setItem("walletAddress", currentWallet);
+
         updateWalletUI();
+
+        if (supabase) {
+          await ensureProfile(currentWallet);
+        }
       }
 
     } catch (err) {

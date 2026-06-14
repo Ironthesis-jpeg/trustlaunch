@@ -2,12 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wallet Dashboard - TrustLaunch</title>
+<title>Launch Token - TrustLaunch</title>
+
 <link rel="stylesheet" href="styles.css">
-
-<!-- Web3 Ready (future wallet connect upgrade) -->
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -17,254 +15,95 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>
-  <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
 </nav>
 
-<h1>💼 Creator Dashboard</h1>
+<h1>🚀 Launch Token</h1>
 
-<button onclick="connectWallet()" style="padding:10px;margin:10px;">
-  🔌 Connect Wallet
-</button>
+<form onsubmit="launch(event)">
 
-<section>
-  <h2>Wallet Information</h2>
+<input id="name" placeholder="Token Name"><br><br>
+<input id="symbol" placeholder="Symbol"><br><br>
+<textarea id="desc" placeholder="Description"></textarea><br><br>
 
-  <p><strong>Wallet:</strong> <span id="walletAddress">Not Connected</span></p>
-  <p><strong>Projects:</strong> <span id="totalProjects">0</span></p>
-  <p><strong>Total Likes:</strong> <span id="totalLikes">0</span></p>
-  <p><strong>Total Views:</strong> <span id="totalViews">0</span></p>
-  <p><strong>Average Trust Score:</strong> <span id="avgTrust">0</span></p>
-</section>
+<select id="type">
+  <option>Meme</option>
+  <option>Safe</option>
+  <option>Pro</option>
+</select><br><br>
 
-<section>
-  <h2>Founder Stats</h2>
+<input id="supply" type="number" placeholder="Total Supply"><br><br>
 
-  <p><strong>Founder Reputation:</strong> <span id="reputation"></span></p>
-  <p><strong>Founder Level:</strong> <span id="founderLevel"></span></p>
-  <p><strong>Founder XP:</strong> <span id="founderXP"></span></p>
-  <p><strong>Badge:</strong> <span id="badge"></span></p>
-</section>
+<button type="submit">Launch</button>
 
-<section>
-  <h2>🏆 Achievements</h2>
-  <div id="achievements">No achievements yet.</div>
-</section>
-
-<section>
-  <h2>🚀 Best Performing Project</h2>
-  <div id="bestProject">No projects yet.</div>
-</section>
-
-<section>
-  <h2>📊 My Projects</h2>
-  <div id="myProjects">No projects launched.</div>
-</section>
-
-<footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer>
+</form>
 
 <script>
 
-/* =========================
-   WALLET CONNECT (BASIC META MASK)
-========================= */
+const supabase = window.supabase.createClient(
+  "https://uyuokduxqjghmqypheyi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
+);
 
-async function connectWallet() {
-  try {
-    if (!window.ethereum) {
-      alert("Please install MetaMask");
-      return;
-    }
+/* GET WALLET */
+function getWallet() {
+  return localStorage.getItem("walletAddress");
+}
 
-    const accounts = await window.ethereum.request({
-      method: "eth_requestAccounts"
-    });
+/* PROFILE AUTO CREATE */
+async function ensureProfile(wallet) {
 
-    const wallet = accounts[0];
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("wallet", wallet)
+    .single();
 
-    localStorage.setItem("walletAddress", wallet);
-
-    document.getElementById("walletAddress").textContent =
-      wallet.slice(0,6) + "..." + wallet.slice(-4);
-
-    loadDashboard();
-
-  } catch (err) {
-    console.error(err);
-    alert("Wallet connection failed");
+  if (!data) {
+    await supabase
+      .from("profiles")
+      .insert([{
+        wallet,
+        username: "User_" + wallet.slice(0,6)
+      }]);
   }
 }
 
-/* =========================
-   LOAD WALLET
-========================= */
+/* LAUNCH */
+window.launch = async function(e) {
+  e.preventDefault();
 
-let walletAddress =
-  localStorage.getItem("walletAddress") || "Not Connected";
+  const wallet = getWallet();
+  if (!wallet) return alert("Connect wallet first");
 
-document.getElementById("walletAddress").textContent =
-walletAddress === "Not Connected"
-  ? walletAddress
-  : walletAddress.slice(0,6) + "..." + walletAddress.slice(-4);
+  await ensureProfile(wallet);
 
-/* =========================
-   LOAD PROJECTS
-========================= */
+  const project = {
+    token_name: document.getElementById("name").value,
+    token_symbol: document.getElementById("symbol").value,
+    description: document.getElementById("desc").value,
+    launch_type: document.getElementById("type").value,
+    total_supply: Number(document.getElementById("supply").value),
+    creator_wallet: wallet,
+    trust_score: 100,
+    likes: 0,
+    views: 0
+  };
 
-const projects =
-  JSON.parse(localStorage.getItem("projects") || "[]");
+  const { data, error } = await supabase
+    .from("launches")
+    .insert([project])
+    .select()
+    .single();
 
-/* =========================
-   SAFE CREATOR DETECTION
-========================= */
-
-function getCreator(p) {
-  return (
-    p.creator_wallet ||
-    p.creatorWallet ||
-    p.creator_wallet_address ||
-    ""
-  );
-}
-
-/* =========================
-   MAIN DASHBOARD FUNCTION
-========================= */
-
-function loadDashboard() {
-
-  const wallet = localStorage.getItem("walletAddress") || "Not Connected";
-
-  const myProjects = projects.filter(p =>
-    getCreator(p) === wallet
-  );
-
-  document.getElementById("totalProjects").textContent = myProjects.length;
-
-  let totalLikes = 0;
-  let totalViews = 0;
-  let totalTrust = 0;
-
-  myProjects.forEach(p => {
-
-    const symbol =
-      p.token_symbol ||
-      p.tokenSymbol ||
-      "";
-
-    totalLikes += Number(localStorage.getItem("likes_" + symbol) || 0);
-    totalViews += Number(localStorage.getItem("views_" + symbol) || 0);
-    totalTrust += Number(p.trust_score || p.trustScore || 0);
-
-  });
-
-  document.getElementById("totalLikes").textContent = totalLikes;
-  document.getElementById("totalViews").textContent = totalViews;
-
-  document.getElementById("avgTrust").textContent =
-    myProjects.length
-      ? (totalTrust / myProjects.length).toFixed(1)
-      : 0;
-
-  /* reputation */
-  const reputation = Math.min(100, 50 + myProjects.length * 10);
-  document.getElementById("reputation").textContent = reputation;
-
-  /* level */
-  let level = 1;
-  if (myProjects.length >= 3) level = 2;
-  if (myProjects.length >= 5) level = 3;
-  if (myProjects.length >= 10) level = 4;
-  if (myProjects.length >= 25) level = 5;
-
-  document.getElementById("founderLevel").textContent = level;
-
-  /* XP */
-  const xp =
-    (myProjects.length * 100) +
-    (totalLikes * 5) +
-    totalViews;
-
-  document.getElementById("founderXP").textContent = xp;
-
-  /* badge */
-  let badge = "⭐ New Founder";
-  if (myProjects.length >= 5) badge = "🏆 Trusted Founder";
-  if (myProjects.length >= 10) badge = "👑 Elite Founder";
-  if (myProjects.length >= 25) badge = "🔥 Legendary Founder";
-
-  document.getElementById("badge").textContent = badge;
-
-  /* achievements */
-  const achievements = [];
-
-  if (myProjects.length >= 1) achievements.push("🚀 First Launch");
-  if (myProjects.length >= 5) achievements.push("🏆 Trusted Founder");
-  if (totalLikes >= 100) achievements.push("❤️ Community Favorite");
-  if (totalViews >= 1000) achievements.push("👀 Viral Creator");
-
-  document.getElementById("achievements").innerHTML =
-    achievements.length ? achievements.join("<br>") : "None Yet";
-
-  /* best project */
-  let bestProject = null;
-  let bestScore = 0;
-
-  myProjects.forEach(p => {
-
-    const symbol =
-      p.token_symbol ||
-      p.tokenSymbol ||
-      "";
-
-    const likes = Number(localStorage.getItem("likes_" + symbol) || 0);
-    const views = Number(localStorage.getItem("views_" + symbol) || 0);
-
-    const score =
-      likes + views + Number(p.trust_score || p.trustScore || 0);
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestProject = p;
-    }
-
-  });
-
-  if (bestProject) {
-    document.getElementById("bestProject").innerHTML = `
-      <h3>${bestProject.token_name || bestProject.tokenName}</h3>
-      <p>Symbol: ${bestProject.token_symbol || bestProject.tokenSymbol}</p>
-      <p>Trust Score: ${bestProject.trust_score || bestProject.trustScore}</p>
-    `;
+  if (error) {
+    alert(error.message);
+    return;
   }
 
-  /* project list */
-  const container = document.getElementById("myProjects");
+  localStorage.setItem("selectedProject", JSON.stringify(data));
 
-  if (myProjects.length) {
-    container.innerHTML = "";
-
-    myProjects.slice().reverse().forEach(p => {
-      container.innerHTML += `
-        <div>
-          <h3>🚀 ${p.token_name || p.tokenName}</h3>
-          <p>Trust Score: ${p.trust_score || p.trustScore}</p>
-          <p>Launch Type: ${p.launch_type || p.launchType}</p>
-          <hr>
-        </div>
-      `;
-    });
-  }
-}
-
-/* INIT */
-loadDashboard();
+  window.location.href = "project.html";
+};
 
 </script>
 

@@ -84,7 +84,12 @@ function normalize(p) {
     token_symbol: p.token_symbol || p.tokenSymbol,
     launch_type: p.launch_type || p.launchType,
     trust_score: p.trust_score || p.trustScore,
-    creator_wallet: p.creator_wallet || p.creatorWallet,
+    creator_wallet:
+  p.creator_wallet ||
+  p.creatorWallet ||
+  p.creator_wallet_address ||
+  localStorage.getItem("walletAddress") ||
+  "Unknown",
     created_at: p.created_at || p.createdAt,
     raw: p
   };

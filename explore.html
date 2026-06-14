@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Explore Projects - TrustLaunch</title>
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -48,7 +50,7 @@ onkeyup="renderProjects()">
 <br><br>
 
 <div id="projectsContainer">
-  <p>No projects found.</p>
+  <p>Loading projects...</p>
 </div>
 
 </section>
@@ -60,14 +62,42 @@ onkeyup="renderProjects()">
 <script>
 
 /* =========================
-   LOAD PROJECTS
+   SUPABASE SETUP
 ========================= */
 
-const projects =
-  JSON.parse(localStorage.getItem("projects")) || [];
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "YOUR_ANON_KEY";
 
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+/* =========================
+   STATE
+========================= */
+
+let projects = [];
 let currentFilter = "All";
-let lastRenderedList = [];
+
+/* =========================
+   LOAD FROM SUPABASE
+========================= */
+
+async function loadProjects() {
+
+  const { data, error } = await supabase
+    .from("launches")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    document.getElementById("projectsContainer").innerHTML =
+      "<p>Error loading projects</p>";
+    return;
+  }
+
+  projects = data || [];
+  renderProjects();
+}
 
 function setFilter(filter) {
   currentFilter = filter;
@@ -75,73 +105,31 @@ function setFilter(filter) {
 }
 
 /* =========================
-   NORMALIZE DATA
+   RANK SYSTEM (REALISTIC)
 ========================= */
 
-function normalize(p) {
-  return {
-    token_name: p.token_name || p.tokenName,
-    token_symbol: p.token_symbol || p.tokenSymbol,
-    launch_type: p.launch_type || p.launchType,
-    trust_score: p.trust_score || p.trustScore,
-    creator_wallet:
-  p.creator_wallet ||
-  p.creatorWallet ||
-  p.creator_wallet_address ||
-  localStorage.getItem("walletAddress") ||
-  "Unknown",
-    created_at: p.created_at || p.createdAt,
-    raw: p
-  };
+function calculateRank(p) {
+
+  const likes = Number(p.likes || 0);
+  const views = Number(p.views || 0);
+  const trust = Number(p.trust_score || 0);
+
+  const creatorBoost = Math.min(100, trust * 0.3);
+
+  return trust + likes * 2 + views * 0.5 + creatorBoost;
 }
 
 /* =========================
-   RANK CALCULATION
+   VIEW PROJECT
 ========================= */
 
-function calculateRank(project) {
-
-  const launches =
-    projects.filter(p =>
-      (p.creator_wallet || p.creatorWallet) ===
-      (project.creator_wallet || project.creatorWallet)
-    ).length;
-
-  const reputation = Math.min(100, 50 + launches * 10);
-
-  const likes =
-    Number(localStorage.getItem("likes_" + project.token_symbol) || 0);
-
-  const views =
-    Number(localStorage.getItem("views_" + project.token_symbol) || 0);
-
-  return (
-    Number(project.trust_score || 0) +
-    reputation +
-    launches * 5 +
-    likes +
-    views
-  );
-}
-
-/* =========================
-   VIEW PROJECT SAFE
-========================= */
-
-function viewProject(index) {
-
-  const project = lastRenderedList[index];
-
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(project)
-  );
-
+function viewProject(project) {
+  localStorage.setItem("selectedProject", JSON.stringify(project));
   window.location.href = "project.html";
 }
 
 /* =========================
-   RENDER PROJECTS
+   RENDER
 ========================= */
 
 function renderProjects() {
@@ -150,10 +138,9 @@ function renderProjects() {
   const search = document.getElementById("searchInput").value.toLowerCase();
   const sortType = document.getElementById("sortSelect").value;
 
-  container.innerHTML = "";
+  let list = [...projects];
 
-  let list = projects.map(normalize);
-
+  /* FILTER */
   list = list.filter(p => {
 
     const matchesSearch =
@@ -162,15 +149,12 @@ function renderProjects() {
 
     const matchesFilter =
       currentFilter === "All" ||
-      p.launch_type === currentFilter;
+      p.category === currentFilter;
 
     return matchesSearch && matchesFilter;
   });
 
-  /* store safe list for navigation */
-  lastRenderedList = list.map(p => p.raw);
-
-  /* sorting */
+  /* SORT */
   if (sortType === "newest") {
     list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
   }
@@ -180,64 +164,59 @@ function renderProjects() {
   }
 
   if (sortType === "rank") {
-    list.sort((a,b) => calculateRank(b.raw) - calculateRank(a.raw));
+    list.sort((a,b) => calculateRank(b) - calculateRank(a));
   }
 
   if (sortType === "likes") {
-    list.sort((a,b) =>
-      Number(localStorage.getItem("likes_" + b.token_symbol) || 0) -
-      Number(localStorage.getItem("likes_" + a.token_symbol) || 0)
-    );
+    list.sort((a,b) => (b.likes || 0) - (a.likes || 0));
   }
 
   if (sortType === "views") {
-    list.sort((a,b) =>
-      Number(localStorage.getItem("views_" + b.token_symbol) || 0) -
-      Number(localStorage.getItem("views_" + a.token_symbol) || 0)
-    );
+    list.sort((a,b) => (b.views || 0) - (a.views || 0));
   }
 
+  /* EMPTY */
   if (list.length === 0) {
     container.innerHTML = "<p>No projects found.</p>";
     return;
   }
 
-  list.forEach((p, i) => {
+  /* RENDER */
+  container.innerHTML = "";
 
-    const likes =
-      Number(localStorage.getItem("likes_" + p.token_symbol) || 0);
+  list.forEach(p => {
 
-    const views =
-      Number(localStorage.getItem("views_" + p.token_symbol) || 0);
-
-    const rank = calculateRank(p.raw);
+    const rank = calculateRank(p);
 
     let badge = "🚀 New";
     if (rank >= 200) badge = "🏆 Elite";
     else if (rank >= 170) badge = "⭐ Trusted";
 
     container.innerHTML += `
-      <div>
+      <div style="padding:10px; border-bottom:1px solid #333;">
+
         <h3>${badge} ${p.token_name}</h3>
 
         <p><strong>Symbol:</strong> ${p.token_symbol}</p>
+        <p><strong>Category:</strong> ${p.category || "N/A"}</p>
         <p><strong>Type:</strong> ${p.launch_type}</p>
-        <p><strong>Trust:</strong> ${p.trust_score}</p>
-        <p><strong>Rank:</strong> ${rank}</p>
-        <p><strong>Likes:</strong> ${likes}</p>
-        <p><strong>Views:</strong> ${views}</p>
+        <p><strong>Trust Score:</strong> ${p.trust_score}</p>
+        <p><strong>Rank Score:</strong> ${rank.toFixed(2)}</p>
 
-        <button onclick="viewProject(${i})">
+        <p><strong>Likes:</strong> ${p.likes || 0}</p>
+        <p><strong>Views:</strong> ${p.views || 0}</p>
+
+        <button onclick='viewProject(${JSON.stringify(p)})'>
           View Project
         </button>
 
-        <hr>
       </div>
     `;
   });
 }
 
-renderProjects();
+/* INIT */
+loadProjects();
 
 </script>
 

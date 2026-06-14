@@ -1,284 +1,113 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Launch Token - TrustLaunch</title><link rel="stylesheet" href="styles.css"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body><nav>
+<title>Launch Token - TrustLaunch</title>
+
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<nav>
   <a href="index.html">Home</a>
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>
-  <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
-</nav><h1>🚀 Launch Token</h1><p id="walletStatus">
-Wallet: Not Connected
-</p><form onsubmit="reviewLaunch(event)"><label>Token Name</label><br>
-<input
-id="tokenName"
-type="text"
-placeholder="Wolf Coin"
-required
+</nav>
 
-«<br><br>»
+<h1>🚀 Launch Token</h1>
+
+<form onsubmit="reviewLaunch(event)">
+
+<label>Token Name</label><br>
+<input id="tokenName" type="text"><br><br>
 
 <label>Token Symbol</label><br>
-<input
-id="tokenSymbol"
-type="text"
-placeholder="WOLF"
-maxlength="10"
-required
+<input id="tokenSymbol" type="text"><br><br>
 
-«<br><br>»
+<label>Description</label><br>
+<textarea id="projectDescription"></textarea><br><br>
 
-<label>Project Description</label><br>
+<label>Website</label><br>
+<input id="projectWebsite"><br><br>
 
-<textarea
-  id="projectDescription"
-  placeholder="Describe your project..."
-></textarea><br><br><label>Website</label><br>
-<input
-id="projectWebsite"
-type="url"
-placeholder="https://yourproject.com"
-
-«<br><br>»
-
-<label>X / Twitter</label><br>
-<input
-id="projectTwitter"
-type="url"
-placeholder="https://x.com/yourproject"
-
-«<br><br>»
+<label>Twitter</label><br>
+<input id="projectTwitter"><br><br>
 
 <label>Logo URL</label><br>
-<input
-id="projectLogo"
-type="url"
-placeholder="https://..."
-
-«<br><br>»
+<input id="projectLogo"><br><br>
 
 <label>Category</label><br>
 <select id="projectCategory">
-
   <option>Meme</option>
   <option>AI</option>
   <option>DeFi</option>
   <option>Gaming</option>
-  <option>Infrastructure</option>
-  <option>SocialFi</option>
-  <option>Utility</option>
-</select><br><br><label>Launch Type</label><br>
-<select id="launchType">
+</select><br><br>
 
+<label>Launch Type</label><br>
+<select id="launchType">
   <option>Meme</option>
   <option>Safe</option>
   <option>Pro</option>
-</select><br><br><label>Total Supply</label><br>
-<input
-id="totalSupply"
-type="number"
-placeholder="1000000000"
-required
+</select><br><br>
 
-«<br>»
+<label>Total Supply</label><br>
+<input id="totalSupply" type="number"><br><br>
 
-<p>
-Meme: 100B - 1T<br>
-Safe: 1B - 1T<br>
-Pro: 100M - 100B
-</p><label>Creator Fee</label><br>
+<label>Creator Fee (%)</label><br>
 <select id="creatorFee">
-
   <option value="0">0%</option>
   <option value="1">1%</option>
   <option value="2">2%</option>
-</select><p>
-Creator Fee applies only to buys and sells.<br>
-No fee on transfers.
-</p><button type="submit">
-🚀 Review Launch
-</button></form><footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer><script>
+</select><br><br>
 
-/* =========================
-   WALLET STATUS
-========================= */
+<button type="submit">Review Launch</button>
 
-const walletAddress =
-  localStorage.getItem("walletAddress");
+</form>
 
-if (walletAddress) {
+<script>
 
-  document.getElementById(
-    "walletStatus"
-  ).textContent =
-    "Wallet: " + walletAddress;
-
-}
-
-/* =========================
-   WALLET CHECK
-========================= */
+const supabase = supabase.createClient(
+  "https://uyuokduxqjghmqypheyi.supabase.co",
+  "YOUR_ANON_KEY"
+);
 
 function getWallet() {
-
-  const wallet =
-    localStorage.getItem(
-      "walletAddress"
-    );
-
-  if (
-    !wallet ||
-    wallet === "Not Connected"
-  ) {
-    return null;
-  }
-
-  return wallet;
+  return localStorage.getItem("walletAddress");
 }
 
-/* =========================
-   REVIEW LAUNCH
-========================= */
+window.reviewLaunch = function(e) {
+  e.preventDefault();
 
-function reviewLaunch(event) {
+  const wallet = getWallet();
+  if (!wallet) return alert("Connect wallet first");
 
-  event.preventDefault();
-
-  const wallet =
-    getWallet();
-
-  if (!wallet) {
-
-    alert(
-      "Please connect your wallet first."
-    );
-
-    return;
-  }
-
-  const tokenName =
-    document.getElementById(
-      "tokenName"
-    ).value.trim();
-
-  const tokenSymbol =
-    document.getElementById(
-      "tokenSymbol"
-    )
-    .value
-    .trim()
-    .toUpperCase();
-
-  const projectDescription =
-    document.getElementById(
-      "projectDescription"
-    ).value.trim();
-
-  const projectWebsite =
-    document.getElementById(
-      "projectWebsite"
-    ).value.trim();
-
-  const projectTwitter =
-    document.getElementById(
-      "projectTwitter"
-    ).value.trim();
-
-  const projectLogo =
-    document.getElementById(
-      "projectLogo"
-    ).value.trim();
-
-  const projectCategory =
-    document.getElementById(
-      "projectCategory"
-    ).value;
-
-  const launchType =
-    document.getElementById(
-      "launchType"
-    ).value;
-
-  const totalSupply =
-    Number(
-      document.getElementById(
-        "totalSupply"
-      ).value
-    );
-
-  const creatorFee =
-    Number(
-      document.getElementById(
-        "creatorFee"
-      ).value
-    );
-
-  if (!tokenName) {
-    alert("Token name required.");
-    return;
-  }
-
-  if (!tokenSymbol) {
-    alert("Token symbol required.");
-    return;
-  }
-
-  if (
-    !totalSupply ||
-    totalSupply <= 0
-  ) {
-    alert(
-      "Invalid total supply."
-    );
-    return;
-  }
-
-  const pendingProject = {
-
-    tokenName,
-    tokenSymbol,
-
-    projectDescription,
-    projectWebsite,
-    projectTwitter,
-    projectLogo,
-
-    projectCategory,
-    launchType,
-
-    totalSupply,
-
-    creatorFee,
-
+  const project = {
+    token_name: tokenName.value,
+    token_symbol: tokenSymbol.value,
+    description: projectDescription.value,
+    website: projectWebsite.value,
+    twitter: projectTwitter.value,
+    logo: projectLogo.value,
+    category: projectCategory.value,
+    launch_type: launchType.value,
+    total_supply: Number(totalSupply.value),
+    creator_fee: Number(creatorFee.value),
     creator_wallet: wallet,
-
     trust_score: 100,
-
-    likes: 0,
     views: 0,
-
-    created_at:
-      new Date().toISOString()
-
+    likes: 0,
+    created_at: new Date().toISOString()
   };
 
-  localStorage.setItem(
-    "pendingProject",
-    JSON.stringify(
-      pendingProject
-    )
-  );
+  localStorage.setItem("pendingProject", JSON.stringify(project));
+  window.location.href = "review.html";
+};
 
-  window.location.href =
-    "review.html";
-}
+</script>
 
-</script></body>
+</body>
 </html>

@@ -18,45 +18,36 @@
   <a href="trending.html">Trending</a>
 </nav>
 
-<h1>🚀 Project Details</h1>
+<h1>🚀 Project</h1>
 
 <section>
   <h2 id="title">Loading...</h2>
 
   <p>Symbol: <span id="symbol"></span></p>
-  <p>Type: <span id="type"></span></p>
-  <p>Trust Score: <span id="trust"></span></p>
-  <p>Views: <span id="views">0</span></p>
-  <p>Likes: <span id="likes">0</span></p>
+  <p>Trust: <span id="trust"></span></p>
+  <p>Likes: <span id="likes"></span></p>
+  <p>Views: <span id="views"></span></p>
 
   <button id="likeBtn">❤️ Like</button>
-  <button id="shareBtn">🔗 Share</button>
-
-  <p>Creator: <span id="creator"></span></p>
-  <p>Created: <span id="created"></span></p>
 </section>
 
 <hr>
 
 <section>
-  <h2>📊 Rank Info</h2>
-  <p id="score"></p>
+  <h2>💬 Comments</h2>
+
+  <input id="commentInput" placeholder="Write a comment">
+  <button onclick="postComment()">Post</button>
+
+  <div id="comments"></div>
 </section>
 
 <script>
-
-/* =========================
-   SUPABASE
-========================= */
 
 const supabase = window.supabase.createClient(
   "https://uyuokduxqjghmqypheyi.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
 );
-
-/* =========================
-   GET SELECTED PROJECT
-========================= */
 
 const project = JSON.parse(localStorage.getItem("selectedProject"));
 
@@ -64,97 +55,77 @@ if (!project) {
   document.body.innerHTML = "<h2>No project found</h2>";
 }
 
+let currentProject = project;
+
 /* =========================
-   LOAD REAL DATA FROM SUPABASE
+   LOAD COMMENTS
 ========================= */
 
-async function loadProject() {
+async function loadComments() {
 
   const { data } = await supabase
-    .from("launches")
+    .from("comments")
     .select("*")
-    .eq("id", project.id)
-    .single();
+    .eq("project_id", currentProject.id)
+    .order("created_at", { ascending: false });
 
-  if (!data) return;
-
-  window.currentProject = data;
-
-  render(data);
-  incrementViews(data);
+  renderComments(data || []);
 }
 
 /* =========================
-   INCREMENT VIEWS (REAL DB)
+   POST COMMENT
 ========================= */
 
-async function incrementViews(p) {
+async function postComment() {
+
+  const input = document.getElementById("commentInput");
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  const wallet = localStorage.getItem("walletAddress");
 
   await supabase
-    .from("launches")
-    .update({ views: (p.views || 0) + 1 })
-    .eq("id", p.id);
+    .from("comments")
+    .insert([{
+      project_id: currentProject.id,
+      wallet,
+      message: text
+    }]);
+
+  input.value = "";
+  loadComments();
 }
 
 /* =========================
-   LIKE SYSTEM (REAL DB)
+   RENDER COMMENTS
 ========================= */
 
-document.getElementById("likeBtn").onclick = async function () {
+function renderComments(comments) {
 
-  const p = window.currentProject;
+  const container = document.getElementById("comments");
+  container.innerHTML = "";
 
-  const { data } = await supabase
-    .from("launches")
-    .select("likes")
-    .eq("id", p.id)
-    .single();
+  if (!comments.length) {
+    container.innerHTML = "<p>No comments yet</p>";
+    return;
+  }
 
-  const newLikes = (data.likes || 0) + 1;
+  comments.forEach(c => {
 
-  await supabase
-    .from("launches")
-    .update({ likes: newLikes })
-    .eq("id", p.id);
-
-  document.getElementById("likes").textContent = newLikes;
-};
-
-/* =========================
-   SHARE
-========================= */
-
-document.getElementById("shareBtn").onclick = function () {
-  navigator.clipboard.writeText(location.href);
-  alert("Link copied");
-};
-
-/* =========================
-   RENDER
-========================= */
-
-function render(p) {
-
-  const score =
-    (p.likes || 0) +
-    (p.views || 0) +
-    (p.trust_score || 0);
-
-  document.getElementById("title").textContent = p.token_name;
-  document.getElementById("symbol").textContent = p.token_symbol;
-  document.getElementById("type").textContent = p.launch_type;
-  document.getElementById("trust").textContent = p.trust_score;
-  document.getElementById("views").textContent = p.views || 0;
-  document.getElementById("likes").textContent = p.likes || 0;
-  document.getElementById("creator").textContent = p.creator_wallet;
-  document.getElementById("created").textContent = p.created_at;
-
-  document.getElementById("score").textContent =
-    "Score: " + score;
+    container.innerHTML += `
+      <div style="margin-bottom:10px">
+        <b>${c.wallet || "anon"}</b>
+        <p>${c.message}</p>
+        <small>${new Date(c.created_at).toLocaleString()}</small>
+        <hr>
+      </div>
+    `;
+  });
 }
 
 /* INIT */
-loadProject();
+loadComments();
 
 </script>
 

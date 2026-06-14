@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
-<script src="wallet.js"></script>
 <meta charset="UTF-8">
 <title>Project Details - TrustLaunch</title>
-
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -17,127 +14,190 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
+  <a href="leaderboard.html">Leaderboard</a>
+  <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
-
-  <!-- WALLET CONNECT BUTTON -->
-  <button onclick="connectWallet()">
-    Connect Wallet
-  </button>
-
-  <!-- SHOW CONNECTED WALLET -->
-  <span id="walletDisplay" style="margin-left:10px;">
-    Not Connected
-  </span>
+  <a href="notifications.html">Notifications</a>
+  <a href="watchlist.html">Watchlist</a>
 </nav>
 
-<h1>🚀 Project</h1>
+<h1>🚀 Project Details</h1>
 
 <section>
-  <h2 id="title">Loading...</h2>
 
-  <p>Symbol: <span id="symbol"></span></p>
-  <p>Trust: <span id="trust"></span></p>
-  <p>Likes: <span id="likes"></span></p>
-  <p>Views: <span id="views"></span></p>
+  <h2 id="projectTitle">Loading...</h2>
+
+  <p><strong>Token Name:</strong> <span id="tokenName"></span></p>
+  <p><strong>Token Symbol:</strong> <span id="tokenSymbol"></span></p>
+  <p><strong>Launch Type:</strong> <span id="launchType"></span></p>
+  <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>
+  <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>
+  <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>
+
+  <p><strong>Rank Score:</strong> <span id="rankScore"></span></p>
+
+  <p><strong>Views:</strong> <span id="views">0</span></p>
+  <p><strong>Likes:</strong> <span id="likes">0</span></p>
 
   <button id="likeBtn">❤️ Like</button>
+  <button id="shareBtn">🔗 Share</button>
+
+  <p><strong>Creator Wallet:</strong> <span id="creatorWallet"></span></p>
+  <p><strong>Launch Date:</strong> <span id="launchDate"></span></p>
+  <p><strong>Project Age:</strong> <span id="projectAge"></span></p>
+
 </section>
 
-<hr>
+<section>
+  <h2>🏆 Summary</h2>
+  <div id="trustSummary"></div>
+</section>
+
+<section>
+  <h2>⭐ Rating</h2>
+  <input id="ratingInput" type="number" min="1" max="5" placeholder="1-5">
+  <button id="rateBtn">Rate</button>
+  <p>Average Rating: <span id="avgRating">0</span></p>
+</section>
 
 <section>
   <h2>💬 Comments</h2>
-
-  <input id="commentInput" placeholder="Write a comment">
-  <button onclick="postComment()">Post</button>
-
+  <input id="commentInput" placeholder="Write comment">
+  <button id="commentBtn">Post</button>
   <div id="comments"></div>
+</section>
+
+<section>
+  <h2>🤝 Related Projects</h2>
+  <div id="relatedProjects"></div>
 </section>
 
 <script>
 
-const supabase = window.supabase.createClient(
-  "https://uyuokduxqjghmqypheyi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
-);
-
-const project = JSON.parse(localStorage.getItem("selectedProject"));
-
-if (!project) {
-  document.body.innerHTML = "<h2>No project found</h2>";
-}
-
-let currentProject = project;
-
 /* =========================
-   LOAD COMMENTS
+   SUPABASE
 ========================= */
 
-async function loadComments() {
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-  const { data } = await supabase
-    .from("comments")
-    .select("*")
-    .eq("project_id", currentProject.id)
-    .order("created_at", { ascending: false });
-
-  renderComments(data || []);
-}
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 /* =========================
-   POST COMMENT
+   LOAD PROJECT
 ========================= */
 
-async function postComment() {
+window.onload = async function () {
 
-  const input = document.getElementById("commentInput");
-  const text = input.value.trim();
+  let project =
+    JSON.parse(localStorage.getItem("selectedProject"));
 
-  if (!text) return;
-
-  const wallet = localStorage.getItem("walletAddress");
-
-  await supabase
-    .from("comments")
-    .insert([{
-      project_id: currentProject.id,
-      wallet,
-      message: text
-    }]);
-
-  input.value = "";
-  loadComments();
-}
-
-/* =========================
-   RENDER COMMENTS
-========================= */
-
-function renderComments(comments) {
-
-  const container = document.getElementById("comments");
-  container.innerHTML = "";
-
-  if (!comments.length) {
-    container.innerHTML = "<p>No comments yet</p>";
+  if (!project) {
+    document.body.innerHTML = "<h2>❌ No project found</h2>";
     return;
   }
 
-  comments.forEach(c => {
+  /* =========================
+     GET LATEST FROM SUPABASE
+  ========================= */
 
-    container.innerHTML += `
-      <div style="margin-bottom:10px">
-        <b>${c.wallet || "anon"}</b>
-        <p>${c.message}</p>
-        <small>${new Date(c.created_at).toLocaleString()}</small>
-        <hr>
-      </div>
-    `;
-  });
-}
+  const { data } = await supabase
+    .from("launches")
+    .select("*")
+    .eq("id", project.id)
+    .single();
 
-/* INIT */
-loadComments();
+  project = data || project;
+
+  /* =========================
+     VIEWS (ONLY ONCE PER SESSION)
+  ========================= */
+
+  const viewKey = "viewed_" + project.id;
+
+  if (!sessionStorage.getItem(viewKey)) {
+
+    let views = Number(project.views || 0);
+    views++;
+
+    await supabase
+      .from("launches")
+      .update({ views })
+      .eq("id", project.id);
+
+    project.views = views;
+    sessionStorage.setItem(viewKey, "true");
+  }
+
+  /* =========================
+     POPULATE UI
+  ========================= */
+
+  let likes = project.likes || 0;
+
+  document.getElementById("projectTitle").textContent = project.token_name;
+  document.getElementById("tokenName").textContent = project.token_name;
+  document.getElementById("tokenSymbol").textContent = project.token_symbol;
+  document.getElementById("launchType").textContent = project.launch_type;
+  document.getElementById("totalSupply").textContent = Number(project.total_supply).toLocaleString();
+  document.getElementById("creatorFee").textContent = project.creator_fee || "0%";
+  document.getElementById("trustScore").textContent = project.trust_score;
+
+  document.getElementById("views").textContent = project.views || 0;
+  document.getElementById("likes").textContent = likes;
+
+  document.getElementById("creatorWallet").textContent = project.creator_wallet;
+  document.getElementById("launchDate").textContent =
+    new Date(project.created_at).toLocaleString();
+
+  document.getElementById("projectAge").textContent =
+    Math.floor((Date.now() - new Date(project.created_at)) / 86400000) + " days";
+
+  /* =========================
+     LIKE BUTTON (REAL DB)
+  ========================= */
+
+  document.getElementById("likeBtn").onclick = async () => {
+
+    likes++;
+
+    document.getElementById("likes").textContent = likes;
+
+    await supabase
+      .from("launches")
+      .update({ likes })
+      .eq("id", project.id);
+
+  };
+
+  /* =========================
+     SHARE
+  ========================= */
+
+  document.getElementById("shareBtn").onclick = () => {
+    navigator.clipboard.writeText(location.href);
+    alert("Project link copied!");
+  };
+
+  /* =========================
+     SUMMARY
+  ========================= */
+
+  const rankScore =
+    (project.trust_score || 0) +
+    (project.likes || 0) +
+    (project.views || 0);
+
+  document.getElementById("rankScore").textContent = rankScore;
+
+  document.getElementById("trustSummary").textContent =
+    rankScore >= 200
+      ? "🏆 Elite Project"
+      : rankScore >= 150
+      ? "⭐ Trusted Project"
+      : "🚀 New Project";
+
+};
 
 </script>
 

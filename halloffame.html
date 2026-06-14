@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Hall of Fame - TrustLaunch</title>
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -16,8 +18,6 @@
   <a href="leaderboard.html">Leaderboard</a>
   <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
 </nav>
 
 <h1>🏛️ TrustLaunch Hall of Fame</h1>
@@ -26,17 +26,13 @@
 
   <h2>🌟 Greatest Projects Of All Time</h2>
 
-  <p>
-    The highest-ranked projects in TrustLaunch history.
-  </p>
-
   <div id="hallStats">
     <p>Total Hall Projects: <span id="hallCount">0</span></p>
     <p>Legendary Founders: <span id="legendCount">0</span></p>
   </div>
 
   <div id="hallOfFame">
-    <p>No projects have entered the Hall of Fame yet.</p>
+    <p>Loading...</p>
   </div>
 
 </section>
@@ -44,9 +40,8 @@
 <section>
 
   <h2>👑 Legendary Founders</h2>
-
   <div id="legendaryFounders">
-    <p>No legendary founders yet.</p>
+    <p>Loading...</p>
   </div>
 
 </section>
@@ -54,534 +49,223 @@
 <section>
 
   <h2>🏆 Hall Achievements</h2>
-
   <div id="hallAchievements">
-    <p>No achievements yet.</p>
+    <p>Loading...</p>
   </div>
 
 </section>
 
-<footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer>
-
 <script>
 
-const projects =
-  JSON.parse(
-    localStorage.getItem("projects")
-  ) || [];
-
-const hallOfFame =
-  document.getElementById(
-    "hallOfFame"
-  );
-
-const legendaryFounders =
-  document.getElementById(
-    "legendaryFounders"
-  );
-
-const hallAchievements =
-  document.getElementById(
-    "hallAchievements"
-  );
-
 /* =========================
-   PROJECT RANKING ENGINE
+   SUPABASE SETUP
 ========================= */
 
-const rankedProjects =
-  projects
-    .map(project => {
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "YOUR_ANON_KEY"; // replace with real anon key
 
-      const launches =
-        projects.filter(
-          p =>
-            p.creatorWallet ===
-            project.creatorWallet
-        ).length;
-
-      const reputation =
-        Math.min(
-          100,
-          50 + launches * 10
-        );
-
-      const likes =
-        Number(
-          localStorage.getItem(
-            "likes_" +
-            project.tokenSymbol
-          ) || 0
-        );
-
-      const views =
-        Number(
-          localStorage.getItem(
-            "views_" +
-            project.tokenSymbol
-          ) || 0
-        );
-
-      const ratings =
-        JSON.parse(
-          localStorage.getItem(
-            "ratings_" +
-            project.tokenSymbol
-          ) || "[]"
-        );
-
-      const avgRating =
-        ratings.length
-          ?
-          ratings.reduce(
-            (a,b) => a + b,
-            0
-          ) / ratings.length
-          :
-          0;
-
-      const comments =
-        JSON.parse(
-          localStorage.getItem(
-            "comments_" +
-            project.tokenSymbol
-          ) || "[]"
-        );
-
-      const watchlist =
-        JSON.parse(
-          localStorage.getItem(
-            "watchlist"
-          ) || "[]"
-        );
-
-      const watchCount =
-        watchlist.filter(
-          item =>
-            item.tokenSymbol ===
-            project.tokenSymbol
-        ).length;
-
-      const ageDays =
-        project.createdAt
-          ?
-          Math.max(
-            1,
-            Math.floor(
-              (
-                Date.now() -
-                project.createdAt
-              ) / 86400000
-            )
-          )
-          :
-          1;
-
-      const score =
-        Number(project.trustScore || 0) +
-        reputation +
-        (launches * 5) +
-        likes +
-        views +
-        (avgRating * 10) +
-        comments.length +
-        (watchCount * 5);
-
-      return {
-        ...project,
-        score,
-        reputation,
-        launches,
-        likes,
-        views,
-        avgRating,
-        comments:
-          comments.length,
-        watchCount,
-        ageDays
-      };
-
-    })
-    .sort(
-      (a,b) =>
-        b.score - a.score
-    )
-    .slice(0,10);
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 /* =========================
-   HALL OF FAME PROJECTS
+   LOAD PROJECTS
 ========================= */
 
-if (
-  rankedProjects.length > 0
-) {
+async function loadProjects() {
 
-  hallOfFame.innerHTML = "";
+  const { data: projects, error } = await supabase
+    .from("launches")
+    .select("*");
 
-  rankedProjects.forEach(
-    (project,index) => {
+  if (error) {
+    document.getElementById("hallOfFame").innerHTML =
+      "<p>Error loading projects</p>";
+    return;
+  }
 
-      let medal = "🏅";
+  processHallOfFame(projects || []);
+}
 
-      if(index === 0)
-        medal = "🥇";
+loadProjects();
 
-      if(index === 1)
-        medal = "🥈";
+/* =========================
+   SAFE VALUE HELPERS
+========================= */
 
-      if(index === 2)
-        medal = "🥉";
+const num = (v) => Number(v || 0);
 
-      let title =
-        "Hall Project";
+function processHallOfFame(projects) {
 
-      if(project.score >= 500)
-        title =
-        "🔥 Immortal";
+  /* =========================
+     RANK PROJECTS
+  ========================= */
 
-      else if(project.score >= 350)
-        title =
-        "👑 Legendary";
+  const ranked = projects.map(p => {
 
-      else if(project.score >= 250)
-        title =
-        "🏆 Elite";
+    const launchesByCreator =
+      projects.filter(x => x.creator_wallet === p.creator_wallet).length;
 
-      hallOfFame.innerHTML += `
+    const reputation =
+      Math.min(100, 50 + launchesByCreator * 10);
 
+    const likes = num(p.likes);
+    const views = num(p.views);
+    const trust = num(p.trust_score);
+
+    const created = new Date(p.created_at || Date.now());
+
+    const ageDays =
+      Math.max(1, (Date.now() - created.getTime()) / 86400000);
+
+    const freshnessBoost =
+      ageDays < 3 ? 50 :
+      ageDays < 7 ? 20 : 0;
+
+    const score =
+      trust +
+      reputation +
+      (likes * 2) +
+      (views * 0.5) +
+      freshnessBoost;
+
+    return {
+      ...p,
+      score,
+      reputation,
+      launchesByCreator,
+      likes,
+      views,
+      trust
+    };
+  })
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 10);
+
+  /* =========================
+     HALL OF FAME UI
+  ========================= */
+
+  const hall = document.getElementById("hallOfFame");
+  hall.innerHTML = "";
+
+  ranked.forEach((p, i) => {
+
+    let medal = "🏅";
+    if (i === 0) medal = "🥇";
+    if (i === 1) medal = "🥈";
+    if (i === 2) medal = "🥉";
+
+    let title = "Elite Project";
+    if (p.score > 500) title = "🔥 Immortal";
+    else if (p.score > 350) title = "👑 Legendary";
+    else if (p.score > 250) title = "🏆 Elite";
+
+    hall.innerHTML += `
       <div>
+        <h3>${medal} ${p.token_name}</h3>
 
-        <h3>
-          ${medal}
-          ${project.tokenName}
-        </h3>
+        <p><strong>Title:</strong> ${title}</p>
+        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
+        <p><strong>Rank Score:</strong> ${Math.floor(p.score)}</p>
+        <p><strong>Trust Score:</strong> ${p.trust}</p>
+        <p><strong>Likes:</strong> ${p.likes}</p>
+        <p><strong>Views:</strong> ${p.views}</p>
+        <p><strong>Founder Reputation:</strong> ${p.reputation}</p>
 
-        <p>
-          <strong>Title:</strong>
-          ${title}
-        </p>
-
-        <p>
-          <strong>Symbol:</strong>
-          ${project.tokenSymbol}
-        </p>
-
-        <p>
-          <strong>Rank Score:</strong>
-          ${Math.floor(project.score)}
-        </p>
-
-        <p>
-          <strong>Trust Score:</strong>
-          ${project.trustScore}
-        </p>
-
-        <p>
-          <strong>Founder Reputation:</strong>
-          ${project.reputation}
-        </p>
-
-        <p>
-          <strong>Likes:</strong>
-          ${project.likes}
-        </p>
-
-        <p>
-          <strong>Views:</strong>
-          ${project.views}
-        </p>
-
-        <p>
-          <strong>Comments:</strong>
-          ${project.comments}
-        </p>
-
-        <p>
-          <strong>Watchlists:</strong>
-          ${project.watchCount}
-        </p>
-
-        <p>
-          <strong>Rating:</strong>
-          ${project.avgRating.toFixed(1)}
-        </p>
-
-        <button
-          onclick='viewProject(
-            ${JSON.stringify(project)}
-          )'
-        >
+        <button onclick='viewProject(${JSON.stringify(p)})'>
           View Project
         </button>
 
         <hr>
-
       </div>
+    `;
+  });
 
-      `;
+  /* =========================
+     FOUNDERS RANKING
+  ========================= */
 
-    });
+  const foundersMap = {};
 
-}
+  projects.forEach(p => {
 
-/* =========================
-   FOUNDER RANKING ENGINE
-========================= */
+    const w = p.creator_wallet;
+    if (!w) return;
 
-const founderStats = {};
+    if (!foundersMap[w]) {
+      foundersMap[w] = {
+        wallet: w,
+        launches: 0,
+        trust: 0
+      };
+    }
 
-projects.forEach(project => {
+    foundersMap[w].launches++;
+    foundersMap[w].trust += num(p.trust_score);
+  });
 
-  if(!project.creatorWallet)
-    return;
+  const founders = Object.values(foundersMap)
+    .map(f => {
 
-  if(
-    !founderStats[
-      project.creatorWallet
-    ]
-  ){
+      const reputation =
+        Math.min(100, 50 + f.launches * 10);
 
-    founderStats[
-      project.creatorWallet
-    ] = {
+      const score =
+        f.trust + reputation + (f.launches * 5);
 
-      launches: 0,
-      trust: 0,
-      projects: []
+      return { ...f, reputation, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
 
-    };
+  const founderDiv = document.getElementById("legendaryFounders");
+  founderDiv.innerHTML = "";
 
-  }
+  founders.forEach((f, i) => {
 
-  founderStats[
-    project.creatorWallet
-  ].launches++;
+    let badge = "⭐ Founder";
+    if (f.launches >= 5) badge = "🏆 Trusted Founder";
+    if (f.launches >= 10) badge = "👑 Elite Founder";
+    if (f.launches >= 25) badge = "🔥 Legendary Founder";
 
-  founderStats[
-    project.creatorWallet
-  ].trust +=
-    Number(
-      project.trustScore || 0
-    );
-
-  founderStats[
-    project.creatorWallet
-  ].projects.push(project);
-
-});
-
-const founders =
-  Object.entries(
-    founderStats
-  )
-  .map(([wallet,data]) => {
-
-    const reputation =
-      Math.min(
-        100,
-        50 +
-        (
-          data.launches * 10
-        )
-      );
-
-    const score =
-      data.trust +
-      reputation +
-      (
-        data.launches * 5
-      );
-
-    return {
-
-      wallet,
-      launches:
-        data.launches,
-      trust:
-        data.trust,
-      reputation,
-      score
-
-    };
-
-  })
-  .sort(
-    (a,b) =>
-      b.score - a.score
-  )
-  .slice(0,10);
-
-/* =========================
-   LEGENDARY FOUNDERS
-========================= */
-
-if(
-  founders.length > 0
-){
-
-  legendaryFounders.innerHTML =
-    "";
-
-  founders.forEach(
-    (founder,index) => {
-
-      let badge =
-        "⭐ Founder";
-
-      if(
-        founder.launches >= 5
-      )
-        badge =
-        "🏆 Trusted Founder";
-
-      if(
-        founder.launches >= 10
-      )
-        badge =
-        "👑 Elite Founder";
-
-      if(
-        founder.launches >= 25
-      )
-        badge =
-        "🔥 Legendary Founder";
-
-      legendaryFounders.innerHTML += `
-
+    founderDiv.innerHTML += `
       <div>
-
-        <h3>
-          #${index + 1}
-          ${badge}
-        </h3>
-
-        <p>
-          <strong>Wallet:</strong>
-          ${founder.wallet}
-        </p>
-
-        <p>
-          <strong>Launches:</strong>
-          ${founder.launches}
-        </p>
-
-        <p>
-          <strong>Trust Points:</strong>
-          ${founder.trust}
-        </p>
-
-        <p>
-          <strong>Reputation:</strong>
-          ${founder.reputation}
-        </p>
-
-        <p>
-          <strong>Hall Score:</strong>
-          ${Math.floor(founder.score)}
-        </p>
-
+        <h3>#${i + 1} ${badge}</h3>
+        <p><strong>Wallet:</strong> ${f.wallet}</p>
+        <p><strong>Launches:</strong> ${f.launches}</p>
+        <p><strong>Trust Points:</strong> ${Math.floor(f.trust)}</p>
+        <p><strong>Reputation:</strong> ${f.reputation}</p>
+        <p><strong>Score:</strong> ${Math.floor(f.score)}</p>
         <hr>
-
       </div>
+    `;
+  });
 
-      `;
+  /* =========================
+     STATS
+  ========================= */
 
-    });
+  document.getElementById("hallCount").textContent = ranked.length;
+  document.getElementById("legendCount").textContent = founders.length;
 
-}
+  /* =========================
+     ACHIEVEMENTS
+  ========================= */
 
-/* =========================
-   HALL ACHIEVEMENTS
-========================= */
+  const top = ranked[0];
 
-if(rankedProjects.length > 0){
-
-  const topProject =
-    rankedProjects[0];
-
-  hallAchievements.innerHTML = `
-
-    <p>
-      🥇 Best Project:
-      <strong>
-        ${topProject.tokenName}
-      </strong>
-    </p>
-
-    <p>
-      👀 Most Viewed:
-      <strong>
-        ${
-          rankedProjects
-            .sort(
-              (a,b)=>
-              b.views-a.views
-            )[0].tokenName
-        }
-      </strong>
-    </p>
-
-    <p>
-      ❤️ Most Liked:
-      <strong>
-        ${
-          rankedProjects
-            .sort(
-              (a,b)=>
-              b.likes-a.likes
-            )[0].tokenName
-        }
-      </strong>
-    </p>
-
-    <p>
-      ⭐ Highest Rated:
-      <strong>
-        ${
-          rankedProjects
-            .sort(
-              (a,b)=>
-              b.avgRating-a.avgRating
-            )[0].tokenName
-        }
-      </strong>
-    </p>
-
+  document.getElementById("hallAchievements").innerHTML = `
+    <p>🥇 Best Project: <strong>${top?.token_name || "N/A"}</strong></p>
+    <p>🔥 Highest Score: <strong>${Math.floor(top?.score || 0)}</strong></p>
   `;
-
 }
-
-/* =========================
-   STATS
-========================= */
-
-document.getElementById(
-  "hallCount"
-).textContent =
-  rankedProjects.length;
-
-document.getElementById(
-  "legendCount"
-).textContent =
-  founders.length;
 
 /* =========================
    VIEW PROJECT
 ========================= */
 
-function viewProject(project){
-
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(project)
-  );
-
-  window.location.href =
-    "project.html";
-
+function viewProject(project) {
+  localStorage.setItem("selectedProject", JSON.stringify(project));
+  window.location.href = "project.html";
 }
 
 </script>

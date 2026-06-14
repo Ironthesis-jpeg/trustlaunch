@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>TrustLaunch</title>
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -23,16 +25,10 @@
 <div class="hero">
 
   <h1>🚀 TrustLaunch</h1>
-
   <p>Build trust before hype.</p>
 
-  <a href="launch.html">
-    <button>Launch Token</button>
-  </a>
-
-  <a href="explore.html">
-    <button>Explore Projects</button>
-  </a>
+  <a href="launch.html"><button>Launch Token</button></a>
+  <a href="explore.html"><button>Explore Projects</button></a>
 
 </div>
 
@@ -40,81 +36,37 @@
 
   <h2>📊 Platform Stats</h2>
 
-  <p>
-    Projects Launched:
-    <span id="projectsLaunched">0</span>
-  </p>
-
-  <p>
-    Fair Launches:
-    <span id="fairLaunches">0</span>
-  </p>
-
-  <p>
-    Trusted Founders:
-    <span id="trustedFounders">0</span>
-  </p>
-
-  <p>
-    Total Views:
-    <span id="totalViews">0</span>
-  </p>
-
-  <p>
-    Total Likes:
-    <span id="totalLikes">0</span>
-  </p>
+  <p>Projects Launched: <span id="projectsLaunched">0</span></p>
+  <p>Fair Launches: <span id="fairLaunches">0</span></p>
+  <p>Trusted Founders: <span id="trustedFounders">0</span></p>
+  <p>Total Views: <span id="totalViews">0</span></p>
+  <p>Total Likes: <span id="totalLikes">0</span></p>
 
 </section>
 
 <section>
-
   <h2>🔥 Featured Projects</h2>
-
-  <div id="featuredProjects">
-    <p>No projects yet.</p>
-  </div>
-
+  <div id="featuredProjects"><p>Loading...</p></div>
 </section>
 
 <section>
-
   <h2>📈 Trending Projects</h2>
-
-  <div id="trendingProjects">
-    <p>No trending projects yet.</p>
-  </div>
-
+  <div id="trendingProjects"><p>Loading...</p></div>
 </section>
 
 <section>
-
   <h2>🏆 Top Creators</h2>
-
-  <div id="topCreators">
-    <p>No creators yet.</p>
-  </div>
-
+  <div id="topCreators"><p>Loading...</p></div>
 </section>
 
 <section>
-
   <h2>🥇 Top Trusted Projects</h2>
-
-  <div id="topProjects">
-    <p>No projects yet.</p>
-  </div>
-
+  <div id="topProjects"><p>Loading...</p></div>
 </section>
 
 <section>
-
   <h2>👑 Hall Of Fame Preview</h2>
-
-  <div id="hallOfFame">
-    <p>No legendary founders yet.</p>
-  </div>
-
+  <div id="hallOfFame"><p>Loading...</p></div>
 </section>
 
 <footer>
@@ -124,408 +76,159 @@
 
 <script>
 
-const projects =
-  JSON.parse(
-    localStorage.getItem("projects")
-  ) || [];
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-/* Platform Stats */
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-document.getElementById(
-  "projectsLaunched"
-).textContent =
-  projects.length;
+let projects = [];
 
-document.getElementById(
-  "fairLaunches"
-).textContent =
-  projects.length;
+/* =========================
+   LOAD DATA
+========================= */
 
-const uniqueFounders =
-  new Set(
-    projects
-      .filter(p => p.creatorWallet)
-      .map(p => p.creatorWallet)
-  );
+async function load() {
 
-document.getElementById(
-  "trustedFounders"
-).textContent =
-  uniqueFounders.size;
+  const { data, error } = await supabase
+    .from("launches")
+    .select("*");
 
-/* Views + Likes */
-
-let totalViews = 0;
-let totalLikes = 0;
-
-projects.forEach(project => {
-
-  totalViews +=
-    Number(
-      localStorage.getItem(
-        "views_" + project.tokenSymbol
-      ) || 0
-    );
-
-  totalLikes +=
-    Number(
-      localStorage.getItem(
-        "likes_" + project.tokenSymbol
-      ) || 0
-    );
-
-});
-
-document.getElementById(
-  "totalViews"
-).textContent =
-  totalViews;
-
-document.getElementById(
-  "totalLikes"
-).textContent =
-  totalLikes;
-
-/* Featured Projects */
-
-const featuredProjects =
-  document.getElementById(
-    "featuredProjects"
-  );
-
-const newestProjects =
-  projects
-    .slice()
-    .sort(
-      (a,b) =>
-        b.createdAt - a.createdAt
-    )
-    .slice(0,3);
-
-if (newestProjects.length > 0) {
-
-  featuredProjects.innerHTML = "";
-
-  newestProjects.forEach(project => {
-
-    featuredProjects.innerHTML += `
-      <div>
-
-        <h3>
-          🚀 ${project.tokenName}
-        </h3>
-
-        <p>
-          ${project.launchType}
-        </p>
-
-        <p>
-          Category:
-          ${project.category || "Meme"}
-        </p>
-
-        <p>
-          Trust Score:
-          ${project.trustScore}
-        </p>
-
-      </div>
-
-      <hr>
-    `;
-
-  });
-
-}
-
-/* Trending */
-
-const trendingContainer =
-  document.getElementById(
-    "trendingProjects"
-  );
-
-const trendingProjects =
-  projects
-    .map(project => {
-
-      const likes =
-        Number(
-          localStorage.getItem(
-            "likes_" +
-            project.tokenSymbol
-          ) || 0
-        );
-
-      const views =
-        Number(
-          localStorage.getItem(
-            "views_" +
-            project.tokenSymbol
-          ) || 0
-        );
-
-      return {
-        ...project,
-        score:
-          likes +
-          views
-      };
-
-    })
-    .sort(
-      (a,b) =>
-        b.score - a.score
-    )
-    .slice(0,5);
-
-if (trendingProjects.length > 0) {
-
-  trendingContainer.innerHTML = "";
-
-  trendingProjects.forEach(project => {
-
-    trendingContainer.innerHTML += `
-      <div>
-
-        <h3>
-          🔥 ${project.tokenName}
-        </h3>
-
-        <p>
-          Trending Score:
-          ${project.score}
-        </p>
-
-      </div>
-
-      <hr>
-    `;
-
-  });
-
-}
-
-/* Top Creators */
-
-const creatorCounts = {};
-
-projects.forEach(project => {
-
-  if (!project.creatorWallet)
+  if (error) {
+    console.log(error);
     return;
-
-  if (
-    !creatorCounts[
-      project.creatorWallet
-    ]
-  ) {
-
-    creatorCounts[
-      project.creatorWallet
-    ] = 0;
-
   }
 
-  creatorCounts[
-    project.creatorWallet
-  ]++;
-
-});
-
-const sortedCreators =
-  Object.entries(
-    creatorCounts
-  )
-  .sort(
-    (a,b) =>
-      b[1] - a[1]
-  )
-  .slice(0,5);
-
-const topCreators =
-  document.getElementById(
-    "topCreators"
-  );
-
-if (sortedCreators.length > 0) {
-
-  topCreators.innerHTML = "";
-
-  sortedCreators.forEach(
-    (creator,index) => {
-
-      let badge =
-        "⭐ Founder";
-
-      if (
-        creator[1] >= 5
-      ) {
-        badge =
-          "🏆 Trusted Founder";
-      }
-
-      if (
-        creator[1] >= 10
-      ) {
-        badge =
-          "👑 Elite Founder";
-      }
-
-      if (
-        creator[1] >= 25
-      ) {
-        badge =
-          "🔥 Legendary Founder";
-      }
-
-      topCreators.innerHTML += `
-        <p>
-
-          ${index+1}.
-          ${badge}
-
-          ${creator[0]}
-
-          (${creator[1]}
-          launches)
-
-        </p>
-      `;
-
-    }
-  );
-
+  projects = data || [];
+  renderAll();
 }
 
-/* Top Trusted Projects */
+load();
 
-const rankedProjects =
-  projects
-    .map(project => {
+/* =========================
+   SAFE HELPERS
+========================= */
 
-      const launches =
-        projects.filter(
-          p =>
-          p.creatorWallet ===
-          project.creatorWallet
-        ).length;
+const num = (v) => Number(v || 0);
 
-      const reputation =
-        Math.min(
-          100,
-          50 + launches * 10
-        );
+/* =========================
+   MAIN RENDER
+========================= */
 
-      const likes =
-        Number(
-          localStorage.getItem(
-            "likes_" +
-            project.tokenSymbol
-          ) || 0
-        );
+function renderAll() {
 
-      const views =
-        Number(
-          localStorage.getItem(
-            "views_" +
-            project.tokenSymbol
-          ) || 0
-        );
+  /* ================= STATS ================= */
 
-      const rankScore =
-        Number(
-          project.trustScore || 0
-        ) +
-        reputation +
-        (launches * 5) +
-        likes +
-        views;
+  document.getElementById("projectsLaunched").textContent = projects.length;
+  document.getElementById("fairLaunches").textContent = projects.length;
 
-      return {
-        ...project,
-        rankScore
-      };
+  const founders = new Set(projects.map(p => p.creator_wallet).filter(Boolean));
+  document.getElementById("trustedFounders").textContent = founders.size;
 
-    })
-    .sort(
-      (a,b) =>
-        b.rankScore -
-        a.rankScore
-    )
+  let totalViews = 0;
+  let totalLikes = 0;
+
+  projects.forEach(p => {
+    totalViews += num(p.views);
+    totalLikes += num(p.likes);
+  });
+
+  document.getElementById("totalViews").textContent = totalViews;
+  document.getElementById("totalLikes").textContent = totalLikes;
+
+  /* ================= FEATURED ================= */
+
+  const featured = [...projects]
+    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0,3);
+
+  document.getElementById("featuredProjects").innerHTML =
+    featured.map(p => `
+      <div>
+        <h3>🚀 ${p.token_name}</h3>
+        <p>${p.launch_type}</p>
+        <p>Category: ${p.category || "Meme"}</p>
+        <p>Trust Score: ${p.trust_score}</p>
+        <hr>
+      </div>
+    `).join("");
+
+  /* ================= TRENDING ================= */
+
+  const trending = [...projects]
+    .map(p => ({
+      ...p,
+      score: num(p.likes) + num(p.views)
+    }))
+    .sort((a,b) => b.score - a.score)
     .slice(0,5);
 
-const topProjects =
-  document.getElementById(
-    "topProjects"
-  );
-
-if (rankedProjects.length > 0) {
-
-  topProjects.innerHTML = "";
-
-  rankedProjects.forEach(
-    (project,index) => {
-
-      topProjects.innerHTML += `
-        <div>
-
-          <h3>
-            ${index+1}.
-            🏆
-            ${project.tokenName}
-          </h3>
-
-          <p>
-            Rank Score:
-            ${project.rankScore}
-          </p>
-
-        </div>
-
+  document.getElementById("trendingProjects").innerHTML =
+    trending.map(p => `
+      <div>
+        <h3>🔥 ${p.token_name}</h3>
+        <p>Trending Score: ${p.score}</p>
         <hr>
+      </div>
+    `).join("");
+
+  /* ================= TOP CREATORS ================= */
+
+  const creatorMap = {};
+
+  projects.forEach(p => {
+    if (!p.creator_wallet) return;
+
+    creatorMap[p.creator_wallet] =
+      (creatorMap[p.creator_wallet] || 0) + 1;
+  });
+
+  const topCreators = Object.entries(creatorMap)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,5);
+
+  document.getElementById("topCreators").innerHTML =
+    topCreators.map(([wallet,count], i) => {
+
+      let badge = "⭐ Founder";
+      if (count >= 5) badge = "🏆 Trusted Founder";
+      if (count >= 10) badge = "👑 Elite Founder";
+      if (count >= 25) badge = "🔥 Legendary Founder";
+
+      return `
+        <p>${i+1}. ${badge} ${wallet} (${count})</p>
       `;
+    }).join("");
 
-    }
-  );
+  /* ================= TOP PROJECTS ================= */
 
-}
+  const topProjects = [...projects]
+    .map(p => ({
+      ...p,
+      rankScore:
+        num(p.trust_score) +
+        num(p.likes) +
+        num(p.views)
+    }))
+    .sort((a,b) => b.rankScore - a.rankScore)
+    .slice(0,5);
 
-/* Hall Of Fame */
+  document.getElementById("topProjects").innerHTML =
+    topProjects.map((p,i) => `
+      <div>
+        <h3>${i+1}. 🏆 ${p.token_name}</h3>
+        <p>Rank Score: ${p.rankScore}</p>
+        <hr>
+      </div>
+    `).join("");
 
-const hall =
-  document.getElementById(
-    "hallOfFame"
-  );
+  /* ================= HALL PREVIEW ================= */
 
-const legends =
-  sortedCreators.filter(
-    founder =>
-      founder[1] >= 10
-  );
+  const legends = topCreators.filter(c => c[1] >= 10);
 
-if (legends.length > 0) {
-
-  hall.innerHTML = "";
-
-  legends.forEach(
-    founder => {
-
-      hall.innerHTML += `
-        <p>
-
-          👑
-          ${founder[0]}
-
-          (${founder[1]}
-          launches)
-
-        </p>
-      `;
-
-    }
-  );
-
+  document.getElementById("hallOfFame").innerHTML =
+    legends.length
+      ? legends.map(c => `<p>👑 ${c[0]} (${c[1]})</p>`).join("")
+      : "<p>No legendary founders yet.</p>";
 }
 
 </script>

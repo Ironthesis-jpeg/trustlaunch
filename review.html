@@ -51,24 +51,21 @@
 </footer>
 
 <script>
+
 /* =========================
    SUPABASE SETUP
 ========================= */
 
-const supabaseUrl =
-  "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
-
-const supabaseClient =
-  window.supabase.createClient(
-    supabaseUrl,
-    supabaseKey
-  );
+const supabaseClient = window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
 /* =========================
-   LOAD PROJECT
+   LOAD PROJECT SAFELY
 ========================= */
 
 const project = JSON.parse(localStorage.getItem("pendingProject"));
@@ -77,6 +74,13 @@ if (!project) {
   alert("No pending project found.");
   window.location.href = "launch.html";
 }
+
+/* =========================
+   NORMALIZE DATA (IMPORTANT FIX)
+========================= */
+
+const walletAddress =
+  localStorage.getItem("walletAddress") || "anonymous";
 
 /* =========================
    POPULATE UI
@@ -91,47 +95,49 @@ document.getElementById("supply").textContent = Number(project.totalSupply || 0)
 document.getElementById("fee").textContent = project.creatorFee || "0%";
 document.getElementById("web").textContent = project.projectWebsite || "N/A";
 document.getElementById("tw").textContent = project.projectTwitter || "N/A";
-
-const wallet = localStorage.getItem("walletAddress") || "anonymous";
-document.getElementById("wallet").textContent = wallet;
-
+document.getElementById("wallet").textContent = walletAddress;
 document.getElementById("date").textContent = new Date().toLocaleString();
 
 /* =========================
-   CONFIRM LAUNCH
+   CONFIRM LAUNCH (FIXED)
 ========================= */
 
 document.getElementById("confirmBtn").onclick = async function () {
 
-  const wallet = localStorage.getItem("walletAddress") || "anonymous";
-
   const { data, error } = await supabaseClient
-  .from("launches")
-  .insert([
-    {
-      token_name: project.tokenName,
-      token_symbol: project.tokenSymbol,
-      description: project.projectDescription,
-      website: project.projectWebsite,
-      twitter: project.projectTwitter,
-      logo: project.projectLogo,
-      category: project.projectCategory,
-      launch_type: project.launchType,
-      total_supply: project.totalSupply,
-      creator_fee: Number(project.creatorFee),
-      creator_wallet: wallet,
-      trust_score: 100
-    }
-  ])
-  .select()
-  .single();
+    .from("launches")
+    .insert([
+      {
+        token_name: project.tokenName,
+        token_symbol: project.tokenSymbol,
+        description: project.projectDescription,
+        website: project.projectWebsite,
+        twitter: project.projectTwitter,
+        logo: project.projectLogo,
+
+        category: project.projectCategory,
+        launch_type: project.launchType,
+
+        total_supply: Number(project.totalSupply || 0),
+        creator_fee: project.creatorFee || "0%",
+
+        creator_wallet: walletAddress,
+        trust_score: 100,
+
+        views: 0,
+        likes: 0
+      }
+    ])
+    .select()
+    .single();
 
   if (error) {
-  console.error(error);
-  alert("Launch failed:\n" + JSON.stringify(error, null, 2));
-  return;
-}
+    console.error(error);
+    alert("Launch failed:\n" + error.message);
+    return;
+  }
 
+  /* save for project page */
   localStorage.setItem("selectedProject", JSON.stringify(data));
   localStorage.removeItem("pendingProject");
 

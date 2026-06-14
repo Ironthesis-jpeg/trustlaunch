@@ -30,6 +30,7 @@
   <p><strong>Total Supply:</strong> <span id="totalSupply"></span></p>
   <p><strong>Creator Fee:</strong> <span id="creatorFee"></span></p>
   <p><strong>Trust Score:</strong> <span id="trustScore"></span></p>
+
   <p><strong>Rank Score:</strong> <span id="rankScore"></span></p>
 
   <p><strong>Views:</strong> <span id="views">0</span></p>
@@ -52,7 +53,7 @@
 
 <section>
   <h2>⭐ Rating</h2>
-  <input id="ratingInput" type="number" min="1" max="5">
+  <input id="ratingInput" type="number" min="1" max="5" placeholder="1-5">
   <button id="rateBtn">Rate</button>
   <p>Average Rating: <span id="avgRating">0</span></p>
 </section>
@@ -70,216 +71,186 @@
 </section>
 
 <script>
-/* =========================
-   LOAD DATA
-========================= */
 
-const project = JSON.parse(localStorage.getItem("selectedProject"));
-const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
+window.onload = function () {
 
-if (!project) {
-  document.body.innerHTML = "<h2>No project found</h2>";
-  throw new Error("No project found");
-}
+  /* =========================
+     LOAD DATA SAFELY
+  ========================= */
 
-/* =========================
-   BASIC STATS FIRST
-========================= */
+  const project =
+    JSON.parse(localStorage.getItem("selectedProject"));
 
-const viewKey = "views_" + project.token_symbol;
-let views = Number(localStorage.getItem(viewKey) || 0) + 1;
-localStorage.setItem(viewKey, views);
+  const allProjects =
+    JSON.parse(localStorage.getItem("projects")) || [];
 
-const likeKey = "likes_" + project.token_symbol;
-let likes = Number(localStorage.getItem(likeKey) || 0);
+  if (!project) {
+    document.body.innerHTML =
+      "<h2>❌ No project found</h2>";
+    return;
+  }
 
-const ratingKey = "ratings_" + project.token_symbol;
-const ratings = JSON.parse(localStorage.getItem(ratingKey) || "[]");
+  /* =========================
+     NORMALIZE DATA
+  ========================= */
 
-const avgRating = ratings.length
-  ? ratings.reduce((a,b)=>a+b,0) / ratings.length
-  : 0;
+  const name = project.token_name || project.tokenName || "Unknown";
+  const symbol = project.token_symbol || project.tokenSymbol || "N/A";
+  const launchType = project.launch_type || project.launchType || "N/A";
+  const supply = project.total_supply || project.totalSupply || 0;
+  const trust = project.trust_score || project.trustScore || 0;
+  const wallet = project.creator_wallet || project.creatorWallet || "Unknown";
+  const created = project.created_at || Date.now();
 
-/* =========================
-   REPUTATION
-========================= */
+  /* =========================
+     VIEWS / LIKES
+  ========================= */
 
-const launches = allProjects.filter(
-  p => p.creator_wallet === project.creator_wallet
-).length;
+  const viewKey = "views_" + symbol;
+  let views = Number(localStorage.getItem(viewKey) || 0) + 1;
+  localStorage.setItem(viewKey, views);
 
-const reputation = Math.min(100, 50 + launches * 10);
+  const likeKey = "likes_" + symbol;
+  let likes = Number(localStorage.getItem(likeKey) || 0);
 
-/* =========================
-   TRUST CHECK
-========================= */
+  /* =========================
+     REPUTATION
+  ========================= */
 
-let verified = "❌ Not Verified";
+  const launches = allProjects.filter(p =>
+    (p.creator_wallet || p.creatorWallet) === wallet
+  ).length;
 
-if (
-  Number(project.trust_score) >= 95 &&
-  reputation >= 80 &&
-  avgRating >= 4.5
-) {
-  verified = "✅ Verified Project";
-}
+  const reputation = Math.min(100, 50 + launches * 10);
 
-/* =========================
-   TRUST CATEGORY
-========================= */
+  const rankScore =
+    Number(trust) + reputation + launches * 5;
 
-let trustCategory = "🔴 High Risk";
+  /* =========================
+     RATING
+  ========================= */
 
-if (Number(project.trust_score) >= 90) {
-  trustCategory = "🟢 Trusted";
-} else if (Number(project.trust_score) >= 70) {
-  trustCategory = "🟡 Building Trust";
-}
+  const ratingKey = "ratings_" + symbol;
+  const ratings =
+    JSON.parse(localStorage.getItem(ratingKey) || "[]");
 
-/* =========================
-   RISK STATUS
-========================= */
+  const avgRating = ratings.length
+    ? ratings.reduce((a,b)=>a+b,0) / ratings.length
+    : 0;
 
-let riskStatus = "✅ Normal";
+  /* =========================
+     RENDER UI
+  ========================= */
 
-if (
-  avgRating < 2 ||
-  reputation < 60 ||
-  Number(project.trust_score) < 60
-) {
-  riskStatus = "🚨 Under Review";
-}
+  document.getElementById("projectTitle").textContent = name;
+  document.getElementById("tokenName").textContent = name;
+  document.getElementById("tokenSymbol").textContent = symbol;
+  document.getElementById("launchType").textContent = launchType;
+  document.getElementById("totalSupply").textContent = Number(supply).toLocaleString();
+  document.getElementById("creatorFee").textContent = project.creator_fee || "0%";
+  document.getElementById("trustScore").textContent = trust;
 
-/* =========================
-   UI POPULATION
-========================= */
+  document.getElementById("rankScore").textContent = rankScore;
 
-const p = project;
+  document.getElementById("creatorWallet").textContent = wallet;
+  document.getElementById("launchDate").textContent =
+    new Date(created).toLocaleString();
 
-/* normalize data */
-const name = p.token_name || p.tokenName;
-const symbol = p.token_symbol || p.tokenSymbol;
-const desc = p.description || p.projectDescription;
-const website = p.website || p.projectWebsite;
-const twitter = p.twitter || p.projectTwitter;
-const logo = p.logo || p.projectLogo;
-const category = p.category || p.projectCategory;
-const launchType = p.launch_type || p.launchType;
-const supply = p.total_supply || p.totalSupply;
-const trust = p.trust_score || p.trustScore;
-const wallet = p.creator_wallet || p.creatorWallet;
-const created = p.created_at || Date.now();
+  document.getElementById("projectAge").textContent =
+    Math.floor((Date.now() - new Date(created)) / 86400000) + " days";
 
-/* render */
-document.getElementById("projectTitle").textContent = name;
-document.getElementById("tokenName").textContent = name;
-document.getElementById("tokenSymbol").textContent = symbol;
-document.getElementById("launchType").textContent = launchType;
-document.getElementById("totalSupply").textContent = Number(supply).toLocaleString();
-document.getElementById("creatorFee").textContent = p.creator_fee;
-document.getElementById("trustScore").textContent = trust;
-
-document.getElementById("creatorWallet").textContent = wallet;
-document.getElementById("launchDate").textContent =
-new Date(created).toLocaleString();
-
-document.getElementById("projectAge").textContent =
-Math.floor((Date.now() - new Date(created)) / 86400000) + " days";
-
-document.getElementById("projectAge").textContent =
-Math.floor((Date.now() - (project.created_at || Date.now())) / 86400000) + " days";
-
-/* =========================
-   VIEWS & LIKES
-========================= */
-
-document.getElementById("views").textContent = views;
-document.getElementById("likes").textContent = likes;
-
-/* Like button */
-document.getElementById("likeBtn").onclick = () => {
-  likes++;
-  localStorage.setItem(likeKey, likes);
+  document.getElementById("views").textContent = views;
   document.getElementById("likes").textContent = likes;
-};
 
-/* Share */
-document.getElementById("shareBtn").onclick = () => {
-  navigator.clipboard.writeText(location.href);
-  alert("Link copied!");
-};
+  /* =========================
+     LIKE BUTTON
+  ========================= */
 
-/* =========================
-   TRUST SUMMARY
-========================= */
+  document.getElementById("likeBtn").onclick = () => {
+    likes++;
+    localStorage.setItem(likeKey, likes);
+    document.getElementById("likes").textContent = likes;
+  };
 
-document.getElementById("trustSummary").textContent =
-Number(project.trust_score) >= 200
-  ? "🏆 Elite ranked project"
-  : Number(project.trust_score) >= 170
-  ? "⭐ Trusted project"
-  : "🚀 New project";
+  /* =========================
+     SHARE BUTTON
+  ========================= */
 
-/* =========================
-   RATING SYSTEM
-========================= */
+  document.getElementById("shareBtn").onclick = () => {
+    navigator.clipboard.writeText(location.href);
+    alert("Project link copied!");
+  };
 
-document.getElementById("avgRating").textContent =
-avgRating.toFixed(1);
+  /* =========================
+     SUMMARY
+  ========================= */
 
-document.getElementById("rateBtn").onclick = () => {
-  const value = Number(document.getElementById("ratingInput").value);
-  if (value < 1 || value > 5) return;
+  document.getElementById("trustSummary").textContent =
+    rankScore >= 200
+      ? "🏆 Elite Project"
+      : rankScore >= 170
+      ? "⭐ Trusted Project"
+      : "🚀 New Project";
 
-  ratings.push(value);
-  localStorage.setItem(ratingKey, JSON.stringify(ratings));
-  location.reload();
-};
+  /* =========================
+     RATING
+  ========================= */
 
-/* =========================
-   COMMENTS
-========================= */
+  document.getElementById("avgRating").textContent =
+    avgRating.toFixed(1);
 
-const commentKey = "comments_" + project.token_symbol;
-const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
+  document.getElementById("rateBtn").onclick = () => {
+    const value =
+      Number(document.getElementById("ratingInput").value);
 
-function renderComments() {
-  document.getElementById("comments").innerHTML =
-    comments.map(c => `<p>💬 ${c}</p>`).join("");
-}
+    if (value < 1 || value > 5) return;
 
-renderComments();
+    ratings.push(value);
+    localStorage.setItem(ratingKey, JSON.stringify(ratings));
+    location.reload();
+  };
 
-document.getElementById("commentBtn").onclick = () => {
-  const txt = document.getElementById("commentInput").value;
-  if (!txt) return;
+  /* =========================
+     COMMENTS
+  ========================= */
 
-  comments.push(txt);
-  localStorage.setItem(commentKey, JSON.stringify(comments));
+  const commentKey = "comments_" + symbol;
+  const comments =
+    JSON.parse(localStorage.getItem(commentKey) || "[]");
+
+  function renderComments() {
+    document.getElementById("comments").innerHTML =
+      comments.map(c => `<p>💬 ${c}</p>`).join("");
+  }
+
   renderComments();
+
+  document.getElementById("commentBtn").onclick = () => {
+    const txt = document.getElementById("commentInput").value;
+    if (!txt) return;
+
+    comments.push(txt);
+    localStorage.setItem(commentKey, JSON.stringify(comments));
+    renderComments();
+  };
+
+  /* =========================
+     RELATED PROJECTS
+  ========================= */
+
+  const related = allProjects
+    .filter(p =>
+      (p.launch_type || p.launchType) === launchType &&
+      (p.token_symbol || p.tokenSymbol) !== symbol
+    )
+    .slice(0, 5);
+
+  document.getElementById("relatedProjects").innerHTML =
+    related.map(p =>
+      `<p>🚀 ${p.token_name || p.tokenName}</p>`
+    ).join("");
+
 };
-
-/* =========================
-   RELATED PROJECTS
-========================= */
-
-const related = allProjects
-  .filter(p =>
-    p.launch_type === project.launch_type &&
-    p.token_symbol !== project.token_symbol
-  )
-  .slice(0, 5);
-
-document.getElementById("relatedProjects").innerHTML =
-related.map(p => `<p>🚀 ${p.token_name}</p>`).join("");
-
-/* =========================
-   FINAL STATUS
-========================= */
-
-document.getElementById("verificationStatus")?.textContent = verified;
-document.getElementById("trustCategory")?.textContent = trustCategory;
-document.getElementById("riskStatus")?.textContent = riskStatus;
 
 </script>
 

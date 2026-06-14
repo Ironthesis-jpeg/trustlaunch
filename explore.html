@@ -14,7 +14,7 @@
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
   <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>        
+  <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
   <a href="notifications.html">Notifications</a>
   <a href="watchlist.html">Watchlist</a>
@@ -24,374 +24,212 @@
 
 <section>
 
-  <h2>Community Launches</h2>
+<input id="searchInput" type="text"
+placeholder="Search token name or symbol"
+onkeyup="renderProjects()">
 
-  <input
-    id="searchInput"
-    type="text"
-    placeholder="Search token name or symbol"
-    onkeyup="renderProjects()"
-  >
+<br><br>
 
-  <br><br>
+<button onclick="setFilter('All')">All</button>
+<button onclick="setFilter('Meme')">Meme</button>
+<button onclick="setFilter('Safe')">Safe</button>
+<button onclick="setFilter('Pro')">Pro</button>
 
-  <button onclick="setFilter('All')">All</button>
-  <button onclick="setFilter('Meme')">Meme</button>
-  <button onclick="setFilter('Safe')">Safe</button>
-  <button onclick="setFilter('Pro')">Pro</button>
+<br><br>
 
-  <br><br>
+<select id="sortSelect" onchange="renderProjects()">
+  <option value="newest">Newest</option>
+  <option value="trust">Trust Score</option>
+  <option value="rank">Rank Score</option>
+  <option value="likes">Likes</option>
+  <option value="views">Views</option>
+</select>
 
-  <select id="sortSelect" onchange="renderProjects()">
-    <option value="newest">Newest</option>
-    <option value="trust">Highest Trust Score</option>
-    <option value="rank">Highest Rank Score</option>
-    <option value="likes">Most Likes</option>
-    <option value="views">Most Views</option>
-  </select>
+<br><br>
 
-  <br><br>
-
-  <div id="projectsContainer">
-    <p>No projects found.</p>
-  </div>
+<div id="projectsContainer">
+  <p>No projects found.</p>
+</div>
 
 </section>
 
 <footer>
   <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
 </footer>
 
 <script>
 
+/* =========================
+   LOAD PROJECTS
+========================= */
+
 const projects =
-  JSON.parse(
-    localStorage.getItem("projects")
-  ) || [];
+  JSON.parse(localStorage.getItem("projects")) || [];
 
 let currentFilter = "All";
+let lastRenderedList = [];
 
 function setFilter(filter) {
-
   currentFilter = filter;
-
   renderProjects();
-
 }
+
+/* =========================
+   NORMALIZE DATA
+========================= */
+
+function normalize(p) {
+  return {
+    token_name: p.token_name || p.tokenName,
+    token_symbol: p.token_symbol || p.tokenSymbol,
+    launch_type: p.launch_type || p.launchType,
+    trust_score: p.trust_score || p.trustScore,
+    creator_wallet: p.creator_wallet || p.creatorWallet,
+    created_at: p.created_at || p.createdAt,
+    raw: p
+  };
+}
+
+/* =========================
+   RANK CALCULATION
+========================= */
 
 function calculateRank(project) {
 
   const launches =
-    projects.filter(
-      p =>
-      p.creatorWallet ===
-      project.creatorWallet
+    projects.filter(p =>
+      (p.creator_wallet || p.creatorWallet) ===
+      (project.creator_wallet || project.creatorWallet)
     ).length;
 
-  const reputation =
-    Math.min(
-      100,
-      50 + launches * 10
-    );
+  const reputation = Math.min(100, 50 + launches * 10);
 
   const likes =
-    Number(
-      localStorage.getItem(
-        "likes_" +
-        project.tokenSymbol
-      ) || 0
-    );
+    Number(localStorage.getItem("likes_" + project.token_symbol) || 0);
 
   const views =
-    Number(
-      localStorage.getItem(
-        "views_" +
-        project.tokenSymbol
-      ) || 0
-    );
+    Number(localStorage.getItem("views_" + project.token_symbol) || 0);
 
   return (
-    Number(project.trustScore || 0) +
+    Number(project.trust_score || 0) +
     reputation +
-    (launches * 5) +
+    launches * 5 +
     likes +
     views
   );
-
 }
 
-function renderProjects() {
+/* =========================
+   VIEW PROJECT SAFE
+========================= */
 
-  const container =
-    document.getElementById(
-      "projectsContainer"
-    );
+function viewProject(index) {
 
-  const search =
-    document
-      .getElementById(
-        "searchInput"
-      )
-      .value
-      .toLowerCase();
-
-  const sortType =
-    document.getElementById(
-      "sortSelect"
-    ).value;
-
-  container.innerHTML = "";
-
-  let filteredProjects =
-    projects.filter(project => {
-
-      const matchesSearch =
-
-        project.tokenName
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        project.tokenSymbol
-          .toLowerCase()
-          .includes(search);
-
-      const matchesFilter =
-
-        currentFilter === "All"
-
-        ||
-
-        project.launchType ===
-        currentFilter;
-
-      return (
-        matchesSearch &&
-        matchesFilter
-      );
-
-    });
-
-  if (sortType === "newest") {
-
-    filteredProjects.sort(
-      (a,b) =>
-        b.createdAt -
-        a.createdAt
-    );
-
-  }
-
-  if (sortType === "trust") {
-
-    filteredProjects.sort(
-      (a,b) =>
-        Number(b.trustScore || 0) -
-        Number(a.trustScore || 0)
-    );
-
-  }
-
-  if (sortType === "rank") {
-
-    filteredProjects.sort(
-      (a,b) =>
-        calculateRank(b) -
-        calculateRank(a)
-    );
-
-  }
-
-  if (sortType === "likes") {
-
-    filteredProjects.sort(
-      (a,b) =>
-
-        Number(
-          localStorage.getItem(
-            "likes_" +
-            b.tokenSymbol
-          ) || 0
-        )
-
-        -
-
-        Number(
-          localStorage.getItem(
-            "likes_" +
-            a.tokenSymbol
-          ) || 0
-        )
-    );
-
-  }
-
-  if (sortType === "views") {
-
-    filteredProjects.sort(
-      (a,b) =>
-
-        Number(
-          localStorage.getItem(
-            "views_" +
-            b.tokenSymbol
-          ) || 0
-        )
-
-        -
-
-        Number(
-          localStorage.getItem(
-            "views_" +
-            a.tokenSymbol
-          ) || 0
-        )
-    );
-
-  }
-
-  if (
-    filteredProjects.length === 0
-  ) {
-
-    container.innerHTML =
-      "<p>No projects found.</p>";
-
-    return;
-
-  }
-
-  filteredProjects.forEach(project => {
-
-    const launchTime =
-
-      project.createdAt
-
-      ?
-
-      new Date(
-        project.createdAt
-      ).toLocaleString()
-
-      :
-
-      "Unknown";
-
-    const launches =
-
-      projects.filter(
-        p =>
-        p.creatorWallet ===
-        project.creatorWallet
-      ).length;
-
-    const likes =
-      Number(
-        localStorage.getItem(
-          "likes_" +
-          project.tokenSymbol
-        ) || 0
-      );
-
-    const views =
-      Number(
-        localStorage.getItem(
-          "views_" +
-          project.tokenSymbol
-        ) || 0
-      );
-
-    const rankScore =
-      calculateRank(project);
-
-    let badge =
-      "🚀 New";
-
-    if (rankScore >= 170)
-      badge = "⭐ Trusted";
-
-    if (rankScore >= 200)
-      badge = "🏆 Elite";
-
-    container.innerHTML += `
-
-      <div>
-
-        <h3>
-          ${badge}
-          ${project.tokenName}
-        </h3>
-
-        <p>
-          <strong>Symbol:</strong>
-          ${project.tokenSymbol}
-        </p>
-
-        <p>
-          <strong>Launch Type:</strong>
-          ${project.launchType}
-        </p>
-
-        <p>
-          <strong>Trust Score:</strong>
-          ${project.trustScore}
-        </p>
-
-        <p>
-          <strong>Rank Score:</strong>
-          ${rankScore}
-        </p>
-
-        <p>
-          <strong>Likes:</strong>
-          ${likes}
-        </p>
-
-        <p>
-          <strong>Views:</strong>
-          ${views}
-        </p>
-
-        <p>
-          <strong>Founder Launches:</strong>
-          ${launches}
-        </p>
-
-        <p>
-          <strong>Launch Date:</strong>
-          ${launchTime}
-        </p>
-
-        <button
-          onclick='viewProject(
-            ${JSON.stringify(project)}
-          )'
-        >
-          View Project
-        </button>
-
-        <hr>
-
-      </div>
-
-    `;
-
-  });
-
-}
-
-function viewProject(project) {
+  const project = lastRenderedList[index];
 
   localStorage.setItem(
     "selectedProject",
     JSON.stringify(project)
   );
 
-  window.location.href =
-    "project.html";
+  window.location.href = "project.html";
+}
 
+/* =========================
+   RENDER PROJECTS
+========================= */
+
+function renderProjects() {
+
+  const container = document.getElementById("projectsContainer");
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const sortType = document.getElementById("sortSelect").value;
+
+  container.innerHTML = "";
+
+  let list = projects.map(normalize);
+
+  list = list.filter(p => {
+
+    const matchesSearch =
+      (p.token_name || "").toLowerCase().includes(search) ||
+      (p.token_symbol || "").toLowerCase().includes(search);
+
+    const matchesFilter =
+      currentFilter === "All" ||
+      p.launch_type === currentFilter;
+
+    return matchesSearch && matchesFilter;
+  });
+
+  /* store safe list for navigation */
+  lastRenderedList = list.map(p => p.raw);
+
+  /* sorting */
+  if (sortType === "newest") {
+    list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  if (sortType === "trust") {
+    list.sort((a,b) => (b.trust_score || 0) - (a.trust_score || 0));
+  }
+
+  if (sortType === "rank") {
+    list.sort((a,b) => calculateRank(b.raw) - calculateRank(a.raw));
+  }
+
+  if (sortType === "likes") {
+    list.sort((a,b) =>
+      Number(localStorage.getItem("likes_" + b.token_symbol) || 0) -
+      Number(localStorage.getItem("likes_" + a.token_symbol) || 0)
+    );
+  }
+
+  if (sortType === "views") {
+    list.sort((a,b) =>
+      Number(localStorage.getItem("views_" + b.token_symbol) || 0) -
+      Number(localStorage.getItem("views_" + a.token_symbol) || 0)
+    );
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = "<p>No projects found.</p>";
+    return;
+  }
+
+  list.forEach((p, i) => {
+
+    const likes =
+      Number(localStorage.getItem("likes_" + p.token_symbol) || 0);
+
+    const views =
+      Number(localStorage.getItem("views_" + p.token_symbol) || 0);
+
+    const rank = calculateRank(p.raw);
+
+    let badge = "🚀 New";
+    if (rank >= 200) badge = "🏆 Elite";
+    else if (rank >= 170) badge = "⭐ Trusted";
+
+    container.innerHTML += `
+      <div>
+        <h3>${badge} ${p.token_name}</h3>
+
+        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
+        <p><strong>Type:</strong> ${p.launch_type}</p>
+        <p><strong>Trust:</strong> ${p.trust_score}</p>
+        <p><strong>Rank:</strong> ${rank}</p>
+        <p><strong>Likes:</strong> ${likes}</p>
+        <p><strong>Views:</strong> ${views}</p>
+
+        <button onclick="viewProject(${i})">
+          View Project
+        </button>
+
+        <hr>
+      </div>
+    `;
+  });
 }
 
 renderProjects();

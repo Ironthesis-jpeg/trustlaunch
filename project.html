@@ -154,22 +154,37 @@ if (
    UI POPULATION
 ========================= */
 
-document.getElementById("projectTitle").textContent = project.token_name;
-document.getElementById("tokenName").textContent = project.token_name;
-document.getElementById("tokenSymbol").textContent = project.token_symbol;
-document.getElementById("launchType").textContent = project.launch_type;
-document.getElementById("totalSupply").textContent = Number(project.total_supply).toLocaleString();
-document.getElementById("creatorFee").textContent = project.creator_fee;
-document.getElementById("trustScore").textContent = project.trust_score;
+const p = project;
 
-document.getElementById("rankScore").textContent =
-Number(project.trust_score) + reputation;
+/* normalize data */
+const name = p.token_name || p.tokenName;
+const symbol = p.token_symbol || p.tokenSymbol;
+const desc = p.description || p.projectDescription;
+const website = p.website || p.projectWebsite;
+const twitter = p.twitter || p.projectTwitter;
+const logo = p.logo || p.projectLogo;
+const category = p.category || p.projectCategory;
+const launchType = p.launch_type || p.launchType;
+const supply = p.total_supply || p.totalSupply;
+const trust = p.trust_score || p.trustScore;
+const wallet = p.creator_wallet || p.creatorWallet;
+const created = p.created_at || Date.now();
 
-document.getElementById("creatorWallet").textContent =
-project.creator_wallet || "Unknown";
+/* render */
+document.getElementById("projectTitle").textContent = name;
+document.getElementById("tokenName").textContent = name;
+document.getElementById("tokenSymbol").textContent = symbol;
+document.getElementById("launchType").textContent = launchType;
+document.getElementById("totalSupply").textContent = Number(supply).toLocaleString();
+document.getElementById("creatorFee").textContent = p.creator_fee;
+document.getElementById("trustScore").textContent = trust;
 
+document.getElementById("creatorWallet").textContent = wallet;
 document.getElementById("launchDate").textContent =
-new Date(project.created_at || Date.now()).toLocaleString();
+new Date(created).toLocaleString();
+
+document.getElementById("projectAge").textContent =
+Math.floor((Date.now() - new Date(created)) / 86400000) + " days";
 
 document.getElementById("projectAge").textContent =
 Math.floor((Date.now() - (project.created_at || Date.now())) / 86400000) + " days";

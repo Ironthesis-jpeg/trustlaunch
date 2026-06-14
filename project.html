@@ -75,18 +75,14 @@
 window.onload = function () {
 
   /* =========================
-     LOAD DATA SAFELY
+     SAFE LOAD PROJECT
   ========================= */
 
-  const project =
-    JSON.parse(localStorage.getItem("selectedProject"));
-
-  const allProjects =
-    JSON.parse(localStorage.getItem("projects")) || [];
+  const project = JSON.parse(localStorage.getItem("selectedProject") || "null");
+  const allProjects = JSON.parse(localStorage.getItem("projects") || "[]");
 
   if (!project) {
-    document.body.innerHTML =
-      "<h2>❌ No project found</h2>";
+    document.body.innerHTML = "<h2>❌ No project found</h2>";
     return;
   }
 
@@ -97,13 +93,21 @@ window.onload = function () {
   const name = project.token_name || project.tokenName || "Unknown";
   const symbol = project.token_symbol || project.tokenSymbol || "N/A";
   const launchType = project.launch_type || project.launchType || "N/A";
-  const supply = project.total_supply || project.totalSupply || 0;
-  const trust = project.trust_score || project.trustScore || 0;
-  const wallet = project.creator_wallet || project.creatorWallet || "Unknown";
-  const created = project.created_at || Date.now();
+  const supply = Number(project.total_supply || project.totalSupply || 0);
+  const trust = Number(project.trust_score || project.trustScore || 0);
+
+  const wallet =
+    project.creator_wallet ||
+    project.creatorWallet ||
+    "Unknown";
+
+  const createdRaw =
+    project.created_at || project.createdAt || Date.now();
+
+  const created = new Date(createdRaw);
 
   /* =========================
-     VIEWS / LIKES
+     VIEWS / LIKES (SAFE)
   ========================= */
 
   const viewKey = "views_" + symbol;
@@ -114,7 +118,7 @@ window.onload = function () {
   let likes = Number(localStorage.getItem(likeKey) || 0);
 
   /* =========================
-     REPUTATION
+     REPUTATION ENGINE
   ========================= */
 
   const launches = allProjects.filter(p =>
@@ -124,7 +128,7 @@ window.onload = function () {
   const reputation = Math.min(100, 50 + launches * 10);
 
   const rankScore =
-    Number(trust) + reputation + launches * 5;
+    trust + reputation + launches * 5 + likes + views;
 
   /* =========================
      RATING
@@ -146,24 +150,23 @@ window.onload = function () {
   document.getElementById("tokenName").textContent = name;
   document.getElementById("tokenSymbol").textContent = symbol;
   document.getElementById("launchType").textContent = launchType;
-  document.getElementById("totalSupply").textContent = Number(supply).toLocaleString();
+  document.getElementById("totalSupply").textContent = supply.toLocaleString();
   document.getElementById("creatorFee").textContent = project.creator_fee || "0%";
   document.getElementById("trustScore").textContent = trust;
 
   document.getElementById("rankScore").textContent = rankScore;
 
   document.getElementById("creatorWallet").textContent = wallet;
-  document.getElementById("launchDate").textContent =
-    new Date(created).toLocaleString();
+  document.getElementById("launchDate").textContent = created.toLocaleString();
 
   document.getElementById("projectAge").textContent =
-    Math.floor((Date.now() - new Date(created)) / 86400000) + " days";
+    Math.floor((Date.now() - created.getTime()) / 86400000) + " days";
 
   document.getElementById("views").textContent = views;
   document.getElementById("likes").textContent = likes;
 
   /* =========================
-     LIKE BUTTON
+     LIKE SYSTEM
   ========================= */
 
   document.getElementById("likeBtn").onclick = () => {
@@ -173,7 +176,7 @@ window.onload = function () {
   };
 
   /* =========================
-     SHARE BUTTON
+     SHARE SYSTEM
   ========================= */
 
   document.getElementById("shareBtn").onclick = () => {
@@ -200,9 +203,7 @@ window.onload = function () {
     avgRating.toFixed(1);
 
   document.getElementById("rateBtn").onclick = () => {
-    const value =
-      Number(document.getElementById("ratingInput").value);
-
+    const value = Number(document.getElementById("ratingInput").value);
     if (value < 1 || value > 5) return;
 
     ratings.push(value);
@@ -211,12 +212,11 @@ window.onload = function () {
   };
 
   /* =========================
-     COMMENTS
+     COMMENTS (SAFE)
   ========================= */
 
   const commentKey = "comments_" + symbol;
-  const comments =
-    JSON.parse(localStorage.getItem(commentKey) || "[]");
+  const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
 
   function renderComments() {
     document.getElementById("comments").innerHTML =
@@ -226,7 +226,7 @@ window.onload = function () {
   renderComments();
 
   document.getElementById("commentBtn").onclick = () => {
-    const txt = document.getElementById("commentInput").value;
+    const txt = document.getElementById("commentInput").value.trim();
     if (!txt) return;
 
     comments.push(txt);

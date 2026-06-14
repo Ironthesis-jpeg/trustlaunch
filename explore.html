@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Explore Projects - TrustLaunch</title>
+
 <link rel="stylesheet" href="styles.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,13 +63,16 @@ onkeyup="renderProjects()">
 <script>
 
 /* =========================
-   SUPABASE SETUP
+   SUPABASE INIT
 ========================= */
 
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "YOUR_ANON_KEY";
+const supabaseKey = "YOUR_ANON_KEY_HERE"; // ⚠️ replace if needed
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
 /* =========================
    STATE
@@ -76,6 +80,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let projects = [];
 let currentFilter = "All";
+let lastRenderedList = [];
 
 /* =========================
    LOAD FROM SUPABASE
@@ -89,9 +94,9 @@ async function loadProjects() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error(error);
     document.getElementById("projectsContainer").innerHTML =
-      "<p>Error loading projects</p>";
+      "<p>Error loading projects.</p>";
+    console.log(error);
     return;
   }
 
@@ -99,24 +104,37 @@ async function loadProjects() {
   renderProjects();
 }
 
+/* =========================
+   FILTER
+========================= */
+
 function setFilter(filter) {
   currentFilter = filter;
   renderProjects();
 }
 
 /* =========================
-   RANK SYSTEM (REALISTIC)
+   RANK CALCULATION
 ========================= */
 
 function calculateRank(p) {
 
-  const likes = Number(p.likes || 0);
-  const views = Number(p.views || 0);
-  const trust = Number(p.trust_score || 0);
+  const likes = Number(localStorage.getItem("likes_" + p.token_symbol) || 0);
+  const views = Number(localStorage.getItem("views_" + p.token_symbol) || 0);
 
-  const creatorBoost = Math.min(100, trust * 0.3);
+  const launches = projects.filter(x =>
+    x.creator_wallet === p.creator_wallet
+  ).length;
 
-  return trust + likes * 2 + views * 0.5 + creatorBoost;
+  const reputation = Math.min(100, 50 + launches * 10);
+
+  return (
+    Number(p.trust_score || 0) +
+    reputation +
+    launches * 5 +
+    likes +
+    views
+  );
 }
 
 /* =========================
@@ -124,7 +142,12 @@ function calculateRank(p) {
 ========================= */
 
 function viewProject(project) {
-  localStorage.setItem("selectedProject", JSON.stringify(project));
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
   window.location.href = "project.html";
 }
 
@@ -138,9 +161,11 @@ function renderProjects() {
   const search = document.getElementById("searchInput").value.toLowerCase();
   const sortType = document.getElementById("sortSelect").value;
 
+  container.innerHTML = "";
+
   let list = [...projects];
 
-  /* FILTER */
+  /* filter */
   list = list.filter(p => {
 
     const matchesSearch =
@@ -149,42 +174,55 @@ function renderProjects() {
 
     const matchesFilter =
       currentFilter === "All" ||
-      p.category === currentFilter;
+      p.launch_type === currentFilter;
 
     return matchesSearch && matchesFilter;
   });
 
-  /* SORT */
+  lastRenderedList = list;
+
+  /* sorting */
   if (sortType === "newest") {
-    list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    list.sort((a,b) =>
+      new Date(b.created_at) - new Date(a.created_at)
+    );
   }
 
   if (sortType === "trust") {
-    list.sort((a,b) => (b.trust_score || 0) - (a.trust_score || 0));
+    list.sort((a,b) =>
+      (b.trust_score || 0) - (a.trust_score || 0)
+    );
   }
 
   if (sortType === "rank") {
-    list.sort((a,b) => calculateRank(b) - calculateRank(a));
+    list.sort((a,b) =>
+      calculateRank(b) - calculateRank(a)
+    );
   }
 
   if (sortType === "likes") {
-    list.sort((a,b) => (b.likes || 0) - (a.likes || 0));
+    list.sort((a,b) =>
+      Number(localStorage.getItem("likes_" + b.token_symbol) || 0) -
+      Number(localStorage.getItem("likes_" + a.token_symbol) || 0)
+    );
   }
 
   if (sortType === "views") {
-    list.sort((a,b) => (b.views || 0) - (a.views || 0));
+    list.sort((a,b) =>
+      Number(localStorage.getItem("views_" + b.token_symbol) || 0) -
+      Number(localStorage.getItem("views_" + a.token_symbol) || 0)
+    );
   }
 
-  /* EMPTY */
   if (list.length === 0) {
     container.innerHTML = "<p>No projects found.</p>";
     return;
   }
 
-  /* RENDER */
-  container.innerHTML = "";
+  list.forEach((p, i) => {
 
-  list.forEach(p => {
+    const likes = Number(localStorage.getItem("likes_" + p.token_symbol) || 0);
+    const views = Number(localStorage.getItem("views_" + p.token_symbol) || 0);
 
     const rank = calculateRank(p);
 
@@ -193,29 +231,31 @@ function renderProjects() {
     else if (rank >= 170) badge = "⭐ Trusted";
 
     container.innerHTML += `
-      <div style="padding:10px; border-bottom:1px solid #333;">
-
+      <div>
         <h3>${badge} ${p.token_name}</h3>
 
         <p><strong>Symbol:</strong> ${p.token_symbol}</p>
-        <p><strong>Category:</strong> ${p.category || "N/A"}</p>
         <p><strong>Type:</strong> ${p.launch_type}</p>
-        <p><strong>Trust Score:</strong> ${p.trust_score}</p>
-        <p><strong>Rank Score:</strong> ${rank.toFixed(2)}</p>
-
-        <p><strong>Likes:</strong> ${p.likes || 0}</p>
-        <p><strong>Views:</strong> ${p.views || 0}</p>
+        <p><strong>Trust:</strong> ${p.trust_score}</p>
+        <p><strong>Rank:</strong> ${rank}</p>
+        <p><strong>Likes:</strong> ${likes}</p>
+        <p><strong>Views:</strong> ${views}</p>
+        <p><strong>Creator:</strong> ${p.creator_wallet || "Unknown"}</p>
 
         <button onclick='viewProject(${JSON.stringify(p)})'>
           View Project
         </button>
 
+        <hr>
       </div>
     `;
   });
 }
 
-/* INIT */
+/* =========================
+   INIT
+========================= */
+
 loadProjects();
 
 </script>

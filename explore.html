@@ -16,11 +16,7 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
 </nav>
 
 <h1>🚀 Explore Projects</h1>
@@ -40,34 +36,20 @@ onkeyup="renderProjects()">
 
 <br><br>
 
-<select id="sortSelect" onchange="renderProjects()">
-  <option value="newest">Newest</option>
-  <option value="trust">Trust Score</option>
-  <option value="rank">Rank Score</option>
-  <option value="likes">Likes</option>
-  <option value="views">Views</option>
-</select>
-
-<br><br>
-
 <div id="projectsContainer">
-  <p>Loading projects...</p>
+  <p>Loading trending projects...</p>
 </div>
 
 </section>
 
-<footer>
-  <p>TrustLaunch</p>
-</footer>
-
 <script>
 
 /* =========================
-   SUPABASE INIT
+   SUPABASE SETUP
 ========================= */
 
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "YOUR_ANON_KEY_HERE"; // ⚠️ replace if needed
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
 const supabase = window.supabase.createClient(
   supabaseUrl,
@@ -80,10 +62,9 @@ const supabase = window.supabase.createClient(
 
 let projects = [];
 let currentFilter = "All";
-let lastRenderedList = [];
 
 /* =========================
-   LOAD FROM SUPABASE
+   LOAD FROM SUPABASE (TRENDING ORDER)
 ========================= */
 
 async function loadProjects() {
@@ -91,12 +72,12 @@ async function loadProjects() {
   const { data, error } = await supabase
     .from("launches")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("trending_score", { ascending: false });
 
   if (error) {
-    document.getElementById("projectsContainer").innerHTML =
-      "<p>Error loading projects.</p>";
     console.log(error);
+    document.getElementById("projectsContainer").innerHTML =
+      "<p>Error loading projects</p>";
     return;
   }
 
@@ -108,46 +89,17 @@ async function loadProjects() {
    FILTER
 ========================= */
 
-function setFilter(filter) {
-  currentFilter = filter;
+function setFilter(f) {
+  currentFilter = f;
   renderProjects();
-}
-
-/* =========================
-   RANK CALCULATION
-========================= */
-
-function calculateRank(p) {
-
-  const likes = Number(localStorage.getItem("likes_" + p.token_symbol) || 0);
-  const views = Number(localStorage.getItem("views_" + p.token_symbol) || 0);
-
-  const launches = projects.filter(x =>
-    x.creator_wallet === p.creator_wallet
-  ).length;
-
-  const reputation = Math.min(100, 50 + launches * 10);
-
-  return (
-    Number(p.trust_score || 0) +
-    reputation +
-    launches * 5 +
-    likes +
-    views
-  );
 }
 
 /* =========================
    VIEW PROJECT
 ========================= */
 
-function viewProject(project) {
-
-  localStorage.setItem(
-    "selectedProject",
-    JSON.stringify(project)
-  );
-
+function viewProject(p) {
+  localStorage.setItem("selectedProject", JSON.stringify(p));
   window.location.href = "project.html";
 }
 
@@ -159,7 +111,6 @@ function renderProjects() {
 
   const container = document.getElementById("projectsContainer");
   const search = document.getElementById("searchInput").value.toLowerCase();
-  const sortType = document.getElementById("sortSelect").value;
 
   container.innerHTML = "";
 
@@ -179,67 +130,21 @@ function renderProjects() {
     return matchesSearch && matchesFilter;
   });
 
-  lastRenderedList = list;
-
-  /* sorting */
-  if (sortType === "newest") {
-    list.sort((a,b) =>
-      new Date(b.created_at) - new Date(a.created_at)
-    );
-  }
-
-  if (sortType === "trust") {
-    list.sort((a,b) =>
-      (b.trust_score || 0) - (a.trust_score || 0)
-    );
-  }
-
-  if (sortType === "rank") {
-    list.sort((a,b) =>
-      calculateRank(b) - calculateRank(a)
-    );
-  }
-
-  if (sortType === "likes") {
-    list.sort((a,b) =>
-      Number(localStorage.getItem("likes_" + b.token_symbol) || 0) -
-      Number(localStorage.getItem("likes_" + a.token_symbol) || 0)
-    );
-  }
-
-  if (sortType === "views") {
-    list.sort((a,b) =>
-      Number(localStorage.getItem("views_" + b.token_symbol) || 0) -
-      Number(localStorage.getItem("views_" + a.token_symbol) || 0)
-    );
-  }
-
   if (list.length === 0) {
-    container.innerHTML = "<p>No projects found.</p>";
+    container.innerHTML = "<p>No projects found</p>";
     return;
   }
 
-  list.forEach((p, i) => {
-
-    const likes = Number(localStorage.getItem("likes_" + p.token_symbol) || 0);
-    const views = Number(localStorage.getItem("views_" + p.token_symbol) || 0);
-
-    const rank = calculateRank(p);
-
-    let badge = "🚀 New";
-    if (rank >= 200) badge = "🏆 Elite";
-    else if (rank >= 170) badge = "⭐ Trusted";
+  list.forEach(p => {
 
     container.innerHTML += `
       <div>
-        <h3>${badge} ${p.token_name}</h3>
+        <h3>🔥 ${p.token_name}</h3>
 
         <p><strong>Symbol:</strong> ${p.token_symbol}</p>
         <p><strong>Type:</strong> ${p.launch_type}</p>
         <p><strong>Trust:</strong> ${p.trust_score}</p>
-        <p><strong>Rank:</strong> ${rank}</p>
-        <p><strong>Likes:</strong> ${likes}</p>
-        <p><strong>Views:</strong> ${views}</p>
+        <p><strong>Trending Score:</strong> ${p.trending_score}</p>
         <p><strong>Creator:</strong> ${p.creator_wallet || "Unknown"}</p>
 
         <button onclick='viewProject(${JSON.stringify(p)})'>

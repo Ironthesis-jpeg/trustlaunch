@@ -1,88 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
-<script src="wallet.js"></script>
-<meta charset="UTF-8">
-<title>Review Launch - TrustLaunch</title>
-
-<link rel="stylesheet" href="styles.css">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-
-<body>
-
-<nav>
-  <a href="index.html">Home</a>
-  <a href="launch.html">Launch</a>
-  <a href="explore.html">Explore</a>
-  <a href="wallet.html">Wallet</a>
-  <a href="trending.html">Trending</a>
-
-  <!-- WALLET CONNECT BUTTON -->
-  <button onclick="connectWallet()">
-    Connect Wallet
-  </button>
-
-  <!-- SHOW CONNECTED WALLET -->
-  <span id="walletDisplay" style="margin-left:10px;">
-    Not Connected
-  </span>
-</nav>
-
-<h1>🚀 Review Launch</h1>
-
-<section>
-  <h2>Launch Summary</h2>
-
-  <p><strong>Token Name:</strong> <span id="name"></span></p>
-  <p><strong>Symbol:</strong> <span id="symbol"></span></p>
-  <p><strong>Description:</strong> <span id="desc"></span></p>
-  <p><strong>Category:</strong> <span id="category"></span></p>
-  <p><strong>Launch Type:</strong> <span id="type"></span></p>
-  <p><strong>Total Supply:</strong> <span id="supply"></span></p>
-  <p><strong>Creator Fee:</strong> <span id="fee"></span></p>
-  <p><strong>Website:</strong> <span id="web"></span></p>
-  <p><strong>Twitter:</strong> <span id="tw"></span></p>
-  <p><strong>Wallet:</strong> <span id="wallet"></span></p>
-  <p><strong>Date:</strong> <span id="date"></span></p>
-</section>
-
-<hr>
-
-<button onclick="window.location.href='launch.html'">
-  ⬅ Back
-</button>
-
-<button id="confirmBtn">
-  🚀 Confirm Launch
-</button>
-
-<footer>
-  <p>TrustLaunch</p>
-</footer>
-
 <script>
 
 /* =========================
-   SUPABASE SETUP
+   SUPABASE
 ========================= */
 
-const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+const supabaseUrl =
+"https://uyuokduxqjghmqypheyi.supabase.co";
 
-const supabaseClient = window.supabase.createClient(
+const supabaseKey =
+"YOUR_SUPABASE_ANON_KEY";
+
+const supabaseClient =
+window.supabase.createClient(
   supabaseUrl,
   supabaseKey
 );
 
 /* =========================
-   LOAD PROJECT SAFELY
+   LOAD PROJECT
 ========================= */
 
 const project =
-  JSON.parse(localStorage.getItem("pendingProject"));
+JSON.parse(
+  sessionStorage.getItem("pendingProject")
+);
 
 if (!project) {
   alert("No pending project found.");
@@ -90,95 +31,151 @@ if (!project) {
 }
 
 /* =========================
-   WALLET (SOURCE OF TRUTH)
+   WALLET
 ========================= */
 
 const walletAddress =
-  localStorage.getItem("walletAddress") || "";
-
-if (!walletAddress) {
-  alert("Wallet not connected. Please connect wallet first.");
-  window.location.href = "wallet.html";
-}
+localStorage.getItem("walletAddress") ||
+"Builder Mode";
 
 /* =========================
-   POPULATE UI
+   DISPLAY DATA
 ========================= */
 
-document.getElementById("name").textContent = project.tokenName || "";
-document.getElementById("symbol").textContent = project.tokenSymbol || "";
-document.getElementById("desc").textContent = project.projectDescription || "";
-document.getElementById("category").textContent = project.projectCategory || "";
-document.getElementById("type").textContent = project.launchType || "";
-document.getElementById("supply").textContent = Number(project.totalSupply || 0).toLocaleString();
-document.getElementById("fee").textContent = project.creatorFee || "0%";
-document.getElementById("web").textContent = project.projectWebsite || "N/A";
-document.getElementById("tw").textContent = project.projectTwitter || "N/A";
+document.getElementById("name").textContent =
+project.token_name || "";
+
+document.getElementById("symbol").textContent =
+project.token_symbol || "";
+
+document.getElementById("desc").textContent =
+project.description || "";
+
+document.getElementById("category").textContent =
+project.category || "";
+
+document.getElementById("type").textContent =
+project.launch_type || "";
+
+document.getElementById("supply").textContent =
+Number(
+project.total_supply || 0
+).toLocaleString();
+
+document.getElementById("fee").textContent =
+project.creator_fee + "%";
+
+document.getElementById("web").textContent =
+project.website || "N/A";
+
+document.getElementById("tw").textContent =
+project.twitter || "N/A";
+
 document.getElementById("wallet").textContent =
-  walletAddress.slice(0,6) + "..." + walletAddress.slice(-4);
+walletAddress;
 
-document.getElementById("date").textContent = new Date().toLocaleString();
+document.getElementById("date").textContent =
+new Date().toLocaleString();
 
 /* =========================
-   CONFIRM LAUNCH (CLEAN + SAFE)
+   CONFIRM LAUNCH
 ========================= */
 
-document.getElementById("confirmBtn").onclick = async function () {
+document.getElementById(
+  "confirmBtn"
+).onclick = async function () {
 
   this.disabled = true;
   this.innerText = "Launching...";
 
   try {
 
-    const { data, error } = await supabaseClient
+    const { data, error } =
+    await supabaseClient
       .from("launches")
       .insert([
         {
-          token_name: project.tokenName,
-          token_symbol: project.tokenSymbol,
-          description: project.projectDescription,
-          website: project.projectWebsite,
-          twitter: project.projectTwitter,
-          logo: project.projectLogo,
+          token_name:
+            project.token_name,
 
-          category: project.projectCategory,
-          launch_type: project.launchType,
+          token_symbol:
+            project.token_symbol,
 
-          total_supply: Number(project.totalSupply || 0),
-          creator_fee: Number(project.creatorFee || 0),
+          description:
+            project.description,
 
-          creator_wallet: walletAddress,
+          website:
+            project.website,
 
-          trust_score: 100,
+          twitter:
+            project.twitter,
+
+          logo:
+            project.logo,
+
+          category:
+            project.category,
+
+          launch_type:
+            project.launch_type,
+
+          total_supply:
+            project.total_supply,
+
+          creator_fee:
+            project.creator_fee,
+
+          creator_wallet:
+            walletAddress,
+
+          trust_score:
+            project.trust_score,
+
           views: 0,
+
           likes: 0,
 
-          created_at: new Date().toISOString()
+          trending_score: 0,
+
+          created_at:
+            new Date().toISOString()
         }
       ])
       .select()
       .single();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    localStorage.setItem("selectedProject", JSON.stringify(data));
-    localStorage.removeItem("pendingProject");
+    localStorage.setItem(
+      "selectedProject",
+      JSON.stringify(data)
+    );
 
-    alert("Launch successful 🚀");
-    window.location.href = "project.html";
+    sessionStorage.removeItem(
+      "pendingProject"
+    );
+
+    alert(
+      "Launch successful 🚀"
+    );
+
+    window.location.href =
+      "project.html";
 
   } catch (err) {
+
     console.error(err);
-    alert("Launch failed: " + err.message);
+
+    alert(
+      "Launch failed: " +
+      err.message
+    );
 
     this.disabled = false;
-    this.innerText = "🚀 Confirm Launch";
+
+    this.innerText =
+      "🚀 Confirm Launch";
   }
 };
 
 </script>
-
-</body>
-</html>

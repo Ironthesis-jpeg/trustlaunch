@@ -22,13 +22,9 @@
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 
-  <button onclick="connectWallet()">
-    Connect Wallet
-  </button>
+  <button onclick="connectWallet()">Connect Wallet</button>
 
-  <span id="walletDisplay">
-    Not Connected
-  </span>
+  <span id="walletDisplay">Not Connected</span>
 </nav>
 
 <h1>🚀 Review Launch</h1>
@@ -47,7 +43,11 @@
   <p><strong>Wallet:</strong> <span id="wallet"></span></p>
   <p><strong>Date:</strong> <span id="date"></span></p>
 
-  <p><strong>On-chain Status:</strong> <span id="chainStatus">Not deployed</span></p>
+  <hr>
+
+  <p><strong>Status:</strong> <span id="status">Waiting</span></p>
+  <p><strong>Tx Hash:</strong> <span id="txhash">-</span></p>
+  <p><strong>Contract Address:</strong> <span id="contract">-</span></p>
 
 </section>
 
@@ -61,14 +61,10 @@
 🚀 Confirm Launch
 </button>
 
-<footer>
-  <p>TrustLaunch</p>
-</footer>
-
 <script>
 
 /* =========================
-   SUPABASE
+   SUPABASE (FUTURE SAFE)
 ========================= */
 
 const supabaseUrl =
@@ -78,10 +74,7 @@ const supabaseKey =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
 const supabaseClient =
-window.supabase.createClient(
-  supabaseUrl,
-  supabaseKey
-);
+window.supabase.createClient(supabaseUrl, supabaseKey);
 
 /* =========================
    LOAD PROJECT
@@ -100,27 +93,61 @@ if (!project) {
 ========================= */
 
 const walletAddress =
-localStorage.getItem("walletAddress") ||
-"Builder Mode";
+localStorage.getItem("walletAddress") || "Builder Mode";
 
 /* =========================
-   DISPLAY DATA
+   DISPLAY
 ========================= */
 
-document.getElementById("name").textContent = project.token_name || "";
-document.getElementById("symbol").textContent = project.token_symbol || "";
-document.getElementById("desc").textContent = project.description || "";
-document.getElementById("category").textContent = project.category || "";
-document.getElementById("type").textContent = project.launch_type || "";
-document.getElementById("supply").textContent = Number(project.total_supply).toLocaleString();
-document.getElementById("fee").textContent = project.creator_fee + "%";
-document.getElementById("web").textContent = project.website || "N/A";
-document.getElementById("tw").textContent = project.twitter || "N/A";
-document.getElementById("wallet").textContent = walletAddress;
-document.getElementById("date").textContent = new Date().toLocaleString();
+function set(id, value) {
+  document.getElementById(id).textContent = value;
+}
+
+set("name", project.token_name);
+set("symbol", project.token_symbol);
+set("desc", project.description);
+set("category", project.category);
+set("type", project.launch_type);
+set("supply", Number(project.total_supply).toLocaleString());
+set("fee", project.creator_fee + "%");
+set("web", project.website || "N/A");
+set("tw", project.twitter || "N/A");
+set("wallet", walletAddress);
+set("date", new Date().toLocaleString());
 
 /* =========================
-   CONFIRM + BLOCKCHAIN FLOW
+   SAFE CONTRACT EXTRACTION
+========================= */
+
+function extractContract(receipt) {
+
+  if (!receipt) return null;
+
+  if (receipt.contractAddress) return receipt.contractAddress;
+
+  try {
+    const logs = receipt.logs || [];
+
+    for (const log of logs) {
+      if (log?.args?.projectAddress) {
+        return log.args.projectAddress;
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+/* =========================
+   UPDATE UI STATE
+========================= */
+
+function updateStatus(text) {
+  set("status", text);
+}
+
+/* =========================
+   MAIN FLOW (FUTURE PROOF)
 ========================= */
 
 document.getElementById("confirmBtn").onclick = async function () {
@@ -130,64 +157,57 @@ document.getElementById("confirmBtn").onclick = async function () {
 
   try {
 
-    document.getElementById("chainStatus").textContent =
-      "Connecting wallet...";
+    updateStatus("Connecting wallet...");
 
-    /* 1. CONNECT / INIT WEB3 */
     const wallet = await TrustLaunchChain.connectWallet();
 
-    document.getElementById("chainStatus").textContent =
-      "Deploying token on-chain...";
+    updateStatus("Deploying on blockchain...");
 
-    /* 2. DEPLOY SMART CONTRACT */
-    const receipt = await TrustLaunchChain.deployProject(project);
-
-    console.log("Deployment receipt:", receipt);
+    const receipt =
+      await TrustLaunchChain.deployProject(project);
 
     const txHash = receipt.hash;
 
-    document.getElementById("chainStatus").textContent =
-      "Saving to database...";
+    const contractAddress =
+      extractContract(receipt);
 
-    /* 3. SAVE TO SUPABASE (NOW WITH ON-CHAIN LINK) */
+    set("txhash", txHash);
+    set("contract", contractAddress || "Pending / Not returned");
+
+    updateStatus("Saving to database...");
+
+    const fullProjectData = {
+      ...project,
+
+      creator_wallet: walletAddress,
+
+      tx_hash: txHash,
+      contract_address: contractAddress,
+
+      views: 0,
+      likes: 0,
+      trending_score: 0,
+
+      created_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabaseClient
       .from("launches")
-      .insert([
-        {
-          token_name: project.token_name,
-          token_symbol: project.token_symbol,
-          description: project.description,
-          website: project.website,
-          twitter: project.twitter,
-          logo: project.logo,
-          category: project.category,
-          launch_type: project.launch_type,
-          total_supply: project.total_supply,
-          creator_fee: project.creator_fee,
-          creator_wallet: walletAddress,
-
-          trust_score: project.trust_score,
-
-          /* 🔥 NEW BLOCKCHAIN FIELDS */
-          tx_hash: txHash,
-          contract_address: null, // optional future upgrade
-
-          views: 0,
-          likes: 0,
-          trending_score: 0,
-          created_at: new Date().toISOString()
-        }
-      ])
+      .insert([fullProjectData])
       .select()
       .single();
 
     if (error) throw error;
 
-    /* CLEANUP */
+    /* SAVE FOR GLOBAL ACCESS */
+    localStorage.setItem(
+      "selectedProject",
+      JSON.stringify(data)
+    );
+
     sessionStorage.removeItem("pendingProject");
 
-    document.getElementById("chainStatus").textContent =
-      "Launch successful 🚀";
+    updateStatus("Launch successful 🚀");
 
     alert("Launch successful 🚀");
 
@@ -197,10 +217,9 @@ document.getElementById("confirmBtn").onclick = async function () {
 
     console.error(err);
 
-    alert("Launch failed: " + err.message);
+    updateStatus("Launch failed ❌");
 
-    document.getElementById("chainStatus").textContent =
-      "Launch failed ❌";
+    alert("Launch failed: " + err.message);
 
     btn.disabled = false;
     btn.innerText = "🚀 Confirm Launch";

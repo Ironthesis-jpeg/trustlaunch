@@ -79,6 +79,7 @@
 </form>
 
 <script>
+
 /* =========================
    SUPABASE INIT (SAFE)
 ========================= */
@@ -99,43 +100,64 @@ function getWallet() {
 }
 
 /* =========================
-   TRUST SCORE (UPGRADED + FUTURE READY)
+   VALIDATION (FUTURE SAFE)
 ========================= */
 
-function calculateTrustScore(project) {
+function validateProject(p) {
+  if (!p.token_name || !p.token_symbol) {
+    alert("Token name and symbol required");
+    return false;
+  }
+
+  if (!p.total_supply || p.total_supply <= 0) {
+    alert("Invalid supply");
+    return false;
+  }
+
+  if (!getWallet()) {
+    alert("Connect wallet first");
+    return false;
+  }
+
+  return true;
+}
+
+/* =========================
+   TRUST SCORE ENGINE (EXPANDABLE)
+========================= */
+
+function calculateTrustScore(p) {
+
   let score = 50;
 
-  // fee-based trust
-  if (project.creator_fee == 0) score += 20;
-  else if (project.creator_fee == 1) score += 15;
-  else if (project.creator_fee == 2) score += 10;
+  // fee system
+  if (p.creator_fee == 0) score += 20;
+  else if (p.creator_fee == 1) score += 15;
+  else if (p.creator_fee == 2) score += 10;
 
   // launch type weighting
-  if (project.launch_type === "Safe") score += 15;
-  else if (project.launch_type === "Pro") score += 10;
+  if (p.launch_type === "Safe") score += 15;
+  else if (p.launch_type === "Pro") score += 10;
 
-  // completeness checks
-  if (project.website) score += 5;
-  if (project.twitter) score += 5;
-  if (project.logo) score += 5;
+  // completeness bonus
+  if (p.website) score += 5;
+  if (p.twitter) score += 5;
+  if (p.logo) score += 5;
+  if (p.description) score += 3;
 
   // scarcity signal
-  if (project.total_supply && project.total_supply < 1000000) score += 10;
+  if (p.total_supply && p.total_supply < 1000000) score += 10;
 
   return Math.min(score, 100);
 }
 
 /* =========================
-   BUILD PROJECT OBJECT
+   BUILD PROJECT (FINAL FORMAT)
 ========================= */
 
 function buildProject() {
-  const wallet = getWallet();
 
-  if (!wallet) {
-    alert("Connect wallet first");
-    return null;
-  }
+  const wallet = getWallet();
 
   const project = {
     token_name: document.getElementById("tokenName").value.trim(),
@@ -153,6 +175,11 @@ function buildProject() {
     views: 0,
     likes: 0,
     trending_score: 0,
+
+    // future blockchain fields (reserved now)
+    contract_address: null,
+    tx_hash: null,
+
     created_at: new Date().toISOString()
   };
 
@@ -162,22 +189,28 @@ function buildProject() {
 }
 
 /* =========================
-   FORM HANDLER (FUTURE SAFE)
+   FORM HANDLER
 ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+
   const form = document.getElementById("launchForm");
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
 
     const project = buildProject();
-    if (!project) return;
 
-    sessionStorage.setItem("pendingProject", JSON.stringify(project));
+    if (!validateProject(project)) return;
+
+    sessionStorage.setItem(
+      "pendingProject",
+      JSON.stringify(project)
+    );
 
     window.location.href = "review.html";
   });
+
 });
 </script>
 

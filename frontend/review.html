@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="styles.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="wallet.js"></script>
+<script src="app.js"></script>
 </head>
 
 <body>
@@ -16,12 +18,16 @@
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
+  <a href="trending.html">Trending</a>
+
+  <button onclick="connectWallet()">Connect Wallet</button>
+
+  <span id="walletDisplay">Not Connected</span>
 </nav>
 
 <h1>🚀 Review Launch</h1>
 
-<section>
-  <h2>Launch Summary</h2>
+<section id="reviewSection">
 
   <p><strong>Token Name:</strong> <span id="name"></span></p>
   <p><strong>Symbol:</strong> <span id="symbol"></span></p>
@@ -33,17 +39,19 @@
   <p><strong>Website:</strong> <span id="web"></span></p>
   <p><strong>Twitter:</strong> <span id="tw"></span></p>
   <p><strong>Wallet:</strong> <span id="wallet"></span></p>
+  <p><strong>Trust Score:</strong> <span id="trust"></span></p>
   <p><strong>Date:</strong> <span id="date"></span></p>
+
 </section>
 
 <hr>
 
 <button onclick="window.location.href='launch.html'">
-  ⬅ Back
+⬅ Back
 </button>
 
 <button id="confirmBtn">
-  🚀 Confirm Launch
+🚀 Confirm Launch
 </button>
 
 <footer>
@@ -51,9 +59,8 @@
 </footer>
 
 <script>
-
 /* =========================
-   SUPABASE SETUP
+   SUPABASE INIT
 ========================= */
 
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
@@ -65,10 +72,10 @@ const supabaseClient = window.supabase.createClient(
 );
 
 /* =========================
-   LOAD PROJECT SAFELY
+   LOAD PROJECT (SAFE)
 ========================= */
 
-const project = JSON.parse(localStorage.getItem("pendingProject"));
+const project = JSON.parse(sessionStorage.getItem("pendingProject"));
 
 if (!project) {
   alert("No pending project found.");
@@ -76,76 +83,113 @@ if (!project) {
 }
 
 /* =========================
-   NORMALIZE DATA (IMPORTANT FIX)
+   WALLET (SOURCE OF TRUTH = LOCAL STORAGE)
 ========================= */
 
-const walletAddress =
-  localStorage.getItem("walletAddress") || "anonymous";
+function getWallet() {
+  return localStorage.getItem("walletAddress") || "Not Connected";
+}
+
+const walletAddress = getWallet();
 
 /* =========================
-   POPULATE UI
+   RENDER UI
 ========================= */
 
-document.getElementById("name").textContent = project.tokenName || "";
-document.getElementById("symbol").textContent = project.tokenSymbol || "";
-document.getElementById("desc").textContent = project.projectDescription || "";
-document.getElementById("category").textContent = project.projectCategory || "";
-document.getElementById("type").textContent = project.launchType || "";
-document.getElementById("supply").textContent = Number(project.totalSupply || 0).toLocaleString();
-document.getElementById("fee").textContent = project.creatorFee || "0%";
-document.getElementById("web").textContent = project.projectWebsite || "N/A";
-document.getElementById("tw").textContent = project.projectTwitter || "N/A";
-document.getElementById("wallet").textContent = walletAddress;
-document.getElementById("date").textContent = new Date().toLocaleString();
+function set(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value ?? "";
+}
+
+set("name", project.token_name);
+set("symbol", project.token_symbol);
+set("desc", project.description);
+set("category", project.category);
+set("type", project.launch_type);
+set("supply", Number(project.total_supply || 0).toLocaleString());
+set("fee", (project.creator_fee || 0) + "%");
+set("web", project.website || "N/A");
+set("tw", project.twitter || "N/A");
+set("wallet", walletAddress);
+set("trust", project.trust_score || 0);
+set("date", new Date(project.created_at || Date.now()).toLocaleString());
 
 /* =========================
-   CONFIRM LAUNCH (FIXED)
+   CONFIRM LAUNCH (SAFE + FUTURE READY)
 ========================= */
 
-document.getElementById("confirmBtn").onclick = async function () {
+const btn = document.getElementById("confirmBtn");
 
-  const { data, error } = await supabaseClient
-    .from("launches")
-    .insert([
-      {
-        token_name: project.tokenName,
-        token_symbol: project.tokenSymbol,
-        description: project.projectDescription,
-        website: project.projectWebsite,
-        twitter: project.projectTwitter,
-        logo: project.projectLogo,
+btn.onclick = async function () {
 
-        category: project.projectCategory,
-        launch_type: project.launchType,
+  if (!project) return;
 
-        total_supply: Number(project.totalSupply || 0),
-        creator_fee: project.creatorFee || "0%",
+  this.disabled = true;
+  this.innerText = "Launching...";
 
-        creator_wallet: walletAddress,
-        trust_score: 100,
+  try {
 
-        views: 0,
-        likes: 0
-      }
-    ])
-    .select()
-    .single();
+    /* =========================
+       1. VALIDATION (ANTI-BAD DATA)
+    ========================= */
 
-  if (error) {
-    console.error(error);
-    alert("Launch failed:\n" + error.message);
-    return;
+    if (!project.token_name || !project.token_symbol) {
+      throw new Error("Invalid project data");
+    }
+
+    if (!walletAddress || walletAddress === "Not Connected") {
+      throw new Error("Wallet not connected");
+    }
+
+    /* =========================
+       2. SAVE TO SUPABASE
+    ========================= */
+
+    const { data, error } = await supabaseClient
+      .from("projects")
+      .insert([
+        {
+          ...project,
+          creator_wallet: walletAddress
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    /* =========================
+       3. FUTURE HOOK (BLOCKCHAIN READY)
+       - reserved for TrustLaunchFactory
+    ========================= */
+
+    // await deployToContract(data);
+
+    /* =========================
+       4. CLEANUP
+    ========================= */
+
+    sessionStorage.removeItem("pendingProject");
+
+    localStorage.setItem(
+      "selectedProject",
+      JSON.stringify(data)
+    );
+
+    alert("Launch successful 🚀");
+
+    window.location.href = "project.html";
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Launch failed: " + err.message);
+
+    this.disabled = false;
+    this.innerText = "🚀 Confirm Launch";
   }
-
-  /* save for project page */
-  localStorage.setItem("selectedProject", JSON.stringify(data));
-  localStorage.removeItem("pendingProject");
-
-  alert("Launch successful 🚀");
-
-  window.location.href = "project.html";
 };
-
 </script>
 
 </body>

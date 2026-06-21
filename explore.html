@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
-<script src="wallet.js"></script>
 <meta charset="UTF-8">
 <title>Explore Projects - TrustLaunch</title>
 
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="wallet.js"></script>
 </head>
 
 <body>
@@ -19,12 +20,8 @@
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 
-  <!-- WALLET CONNECT BUTTON -->
-  <button onclick="connectWallet()">
-    Connect Wallet
-  </button>
+  <button onclick="connectWallet()">Connect Wallet</button>
 
-  <!-- SHOW CONNECTED WALLET -->
   <span id="walletDisplay" style="margin-left:10px;">
     Not Connected
   </span>
@@ -34,19 +31,24 @@
 
 <section>
 
-<input id="searchInput"
-type="text"
-placeholder="Search token name or symbol"
-onkeyup="renderProjects()">
+  <input id="searchInput"
+    type="text"
+    placeholder="Search token name or symbol"
+    onkeyup="renderProjects()">
 
-<br><br>
+  <br><br>
 
-<button onclick="setFilter('All')">All</button>
-<button onclick="setFilter('Meme')">Meme</button>
-<button onclick="setFilter('Safe')">Safe</button>
-<button onclick="setFilter('Pro')">Pro</button>
+  <button onclick="setFilter('All')">All</button>
+  <button onclick="setFilter('Meme')">Meme</button>
+  <button onclick="setFilter('Safe')">Safe</button>
+  <button onclick="setFilter('Pro')">Pro</button>
+
+  <button onclick="setSort('newest')">Newest</button>
+  <button onclick="setSort('trending')">Trending</button>
 
 </section>
+
+<hr>
 
 <section>
   <div id="projectsContainer">
@@ -71,6 +73,7 @@ const supabase = window.supabase.createClient(
 
 let projects = [];
 let currentFilter = "All";
+let currentSort = "newest";
 
 /* =========================
    LOAD PROJECTS
@@ -80,8 +83,7 @@ async function loadProjects() {
 
   const { data, error } = await supabase
     .from("launches")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("*");
 
   if (error) {
     document.getElementById("projectsContainer").innerHTML =
@@ -103,7 +105,16 @@ function setFilter(f) {
 }
 
 /* =========================
-   VIEW PROJECT
+   SORT
+========================= */
+
+function setSort(type) {
+  currentSort = type;
+  renderProjects();
+}
+
+/* =========================
+   SAFE NAVIGATION
 ========================= */
 
 function viewProject(project) {
@@ -120,10 +131,9 @@ function renderProjects() {
   const container = document.getElementById("projectsContainer");
   const search = document.getElementById("searchInput").value.toLowerCase();
 
-  container.innerHTML = "";
-
   let list = [...projects];
 
+  /* FILTER */
   list = list.filter(p => {
 
     const name = (p.token_name || "").toLowerCase();
@@ -139,11 +149,28 @@ function renderProjects() {
     return matchesSearch && matchesFilter;
   });
 
+  /* SORT */
+  if (currentSort === "newest") {
+    list.sort((a, b) =>
+      new Date(b.created_at) - new Date(a.created_at)
+    );
+  }
+
+  if (currentSort === "trending") {
+    list.sort((a, b) =>
+      (b.trending_score || 0) - (a.trending_score || 0)
+    );
+  }
+
+  /* EMPTY STATE */
   if (list.length === 0) {
     container.innerHTML = "<p>No projects found</p>";
     return;
   }
 
+  container.innerHTML = "";
+
+  /* RENDER */
   list.forEach(p => {
 
     const score =
@@ -151,18 +178,21 @@ function renderProjects() {
       (p.views || 0) +
       (p.trust_score || 0);
 
+    const encoded = encodeURIComponent(JSON.stringify(p));
+
     container.innerHTML += `
-      <div>
+      <div class="project-card">
+
         <h3>🚀 ${p.token_name}</h3>
 
-        <p>Symbol: ${p.token_symbol}</p>
-        <p>Type: ${p.launch_type}</p>
-        <p>Trust: ${p.trust_score}</p>
-        <p>Likes: ${p.likes}</p>
-        <p>Views: ${p.views}</p>
-        <p>Score: ${score}</p>
+        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
+        <p><strong>Type:</strong> ${p.launch_type}</p>
+        <p><strong>Trust:</strong> ${p.trust_score}</p>
+        <p><strong>Likes:</strong> ${p.likes}</p>
+        <p><strong>Views:</strong> ${p.views}</p>
+        <p><strong>Score:</strong> ${score}</p>
 
-        <button onclick='viewProject(${JSON.stringify(p)})'>
+        <button onclick="openProject('${encoded}')">
           View Project
         </button>
 
@@ -170,6 +200,15 @@ function renderProjects() {
       </div>
     `;
   });
+}
+
+/* =========================
+   SAFE PROJECT OPEN
+========================= */
+
+function openProject(encoded) {
+  const project = JSON.parse(decodeURIComponent(encoded));
+  viewProject(project);
 }
 
 /* INIT */

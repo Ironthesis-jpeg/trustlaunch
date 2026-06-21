@@ -6,68 +6,9 @@
 
 <link rel="stylesheet" href="styles.css">
 
+<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
-
-const supabaseClient = window.supabase.createClient(
-  supabaseUrl,
-  supabaseKey
-);
-
-window.reviewLaunch = function(event) {
-  event.preventDefault();
-
-  const tokenName = document.getElementById("tokenName").value.trim();
-  const tokenSymbol = document.getElementById("tokenSymbol").value.trim();
-  const projectDescription = document.getElementById("projectDescription").value.trim();
-  const projectWebsite = document.getElementById("projectWebsite").value.trim();
-  const projectTwitter = document.getElementById("projectTwitter").value.trim();
-  const projectLogo = document.getElementById("projectLogo").value.trim();
-  const projectCategory = document.getElementById("projectCategory").value;
-  const launchType = document.getElementById("launchType").value;
-  const totalSupplyRaw = document.getElementById("totalSupply").value;
-  const creatorFee = document.getElementById("creatorFee").value;
-
-  if (!tokenName || !tokenSymbol) {
-    alert("Token Name and Symbol are required.");
-    return;
-  }
-
-  if (!totalSupplyRaw) {
-    alert("Total Supply is required.");
-    return;
-  }
-
-  const totalSupply = Number(totalSupplyRaw);
-
-  if (isNaN(totalSupply) || totalSupply <= 0) {
-    alert("Invalid total supply.");
-    return;
-  }
-
-  // Save all data for review page
-  const pendingProject = {
-    tokenName,
-    tokenSymbol,
-    projectDescription,
-    projectWebsite,
-    projectTwitter,
-    projectLogo,
-    projectCategory,
-    launchType,
-    totalSupply,
-    creatorFee
-  };
-
-  localStorage.setItem("pendingProject", JSON.stringify(pendingProject));
-
-  window.location.href = "review.html";
-};
-</script>
-
+<script src="wallet.js"></script>
 </head>
 
 <body>
@@ -77,84 +18,168 @@ window.reviewLaunch = function(event) {
   <a href="launch.html">Launch</a>
   <a href="explore.html">Explore</a>
   <a href="wallet.html">Wallet</a>
-  <a href="leaderboard.html">Leaderboard</a>
-  <a href="halloffame.html">Hall of Fame</a>
   <a href="trending.html">Trending</a>
-  <a href="notifications.html">Notifications</a>
-  <a href="watchlist.html">Watchlist</a>
+
+  <button onclick="connectWallet()">Connect Wallet</button>
+
+  <span id="walletDisplay" style="margin-left:10px;">
+    Not Connected
+  </span>
 </nav>
 
 <h1>🚀 Launch Token</h1>
 
-<form onsubmit="reviewLaunch(event)">
+<form id="launchForm">
 
 <label>Token Name</label><br>
-<input id="tokenName" type="text" placeholder="Wolf Coin"><br><br>
+<input id="tokenName" type="text" required><br><br>
 
 <label>Token Symbol</label><br>
-<input id="tokenSymbol" type="text" placeholder="WOLF"><br><br>
+<input id="tokenSymbol" type="text" required><br><br>
 
-<label>Project Description</label><br>
-<textarea id="projectDescription" placeholder="Describe your project..."></textarea><br><br>
+<label>Description</label><br>
+<textarea id="projectDescription"></textarea><br><br>
 
 <label>Website</label><br>
-<input id="projectWebsite" type="text" placeholder="https://yourproject.com"><br><br>
+<input id="projectWebsite"><br><br>
 
-<label>X / Twitter</label><br>
-<input id="projectTwitter" type="text" placeholder="https://x.com/yourproject"><br><br>
+<label>Twitter</label><br>
+<input id="projectTwitter"><br><br>
 
 <label>Logo URL</label><br>
-<input id="projectLogo" type="text" placeholder="https://..."><br><br>
+<input id="projectLogo"><br><br>
 
 <label>Category</label><br>
 <select id="projectCategory">
-  <option>Meme</option>
-  <option>AI</option>
-  <option>DeFi</option>
-  <option>Gaming</option>
-  <option>Infrastructure</option>
-  <option>SocialFi</option>
-  <option>Utility</option>
+  <option value="Meme">Meme</option>
+  <option value="AI">AI</option>
+  <option value="DeFi">DeFi</option>
+  <option value="Gaming">Gaming</option>
 </select><br><br>
 
 <label>Launch Type</label><br>
 <select id="launchType">
-  <option>Meme</option>
-  <option>Safe</option>
-  <option>Pro</option>
+  <option value="Meme">Meme</option>
+  <option value="Safe">Safe</option>
+  <option value="Pro">Pro</option>
 </select><br><br>
 
 <label>Total Supply</label><br>
-<input id="totalSupply" type="number" placeholder="1000000000"><br>
+<input id="totalSupply" type="number" required><br><br>
 
-<p>
-Meme: 100B - 1T<br>
-Safe: 1B - 1T<br>
-Pro: 100M - 100B
-</p>
-
-<label>Creator Fee</label><br>
+<label>Creator Fee (%)</label><br>
 <select id="creatorFee">
   <option value="0">0%</option>
   <option value="1">1%</option>
   <option value="2">2%</option>
-</select>
+</select><br><br>
 
-<p>
-Creator Fee applies only to buys and sells.<br>
-No fee on transfers.
-</p>
-
-<button type="submit">
-  Review Launch
-</button>
+<button type="submit">Review Launch</button>
 
 </form>
 
-<footer>
-  <p>TrustLaunch</p>
-  <p>Build trust before hype.</p>
-</footer>
+<script>
+/* =========================
+   SUPABASE INIT (SAFE)
+========================= */
+
+const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+
+const supabase = window.supabase
+  ? window.supabase.createClient(supabaseUrl, supabaseKey)
+  : null;
+
+/* =========================
+   WALLET
+========================= */
+
+function getWallet() {
+  return localStorage.getItem("walletAddress");
+}
+
+/* =========================
+   TRUST SCORE (UPGRADED + FUTURE READY)
+========================= */
+
+function calculateTrustScore(project) {
+  let score = 50;
+
+  // fee-based trust
+  if (project.creator_fee == 0) score += 20;
+  else if (project.creator_fee == 1) score += 15;
+  else if (project.creator_fee == 2) score += 10;
+
+  // launch type weighting
+  if (project.launch_type === "Safe") score += 15;
+  else if (project.launch_type === "Pro") score += 10;
+
+  // completeness checks
+  if (project.website) score += 5;
+  if (project.twitter) score += 5;
+  if (project.logo) score += 5;
+
+  // scarcity signal
+  if (project.total_supply && project.total_supply < 1000000) score += 10;
+
+  return Math.min(score, 100);
+}
+
+/* =========================
+   BUILD PROJECT OBJECT
+========================= */
+
+function buildProject() {
+  const wallet = getWallet();
+
+  if (!wallet) {
+    alert("Connect wallet first");
+    return null;
+  }
+
+  const project = {
+    token_name: document.getElementById("tokenName").value.trim(),
+    token_symbol: document.getElementById("tokenSymbol").value.trim().toUpperCase(),
+    description: document.getElementById("projectDescription").value,
+    website: document.getElementById("projectWebsite").value,
+    twitter: document.getElementById("projectTwitter").value,
+    logo: document.getElementById("projectLogo").value,
+    category: document.getElementById("projectCategory").value,
+    launch_type: document.getElementById("launchType").value,
+    total_supply: Number(document.getElementById("totalSupply").value),
+    creator_fee: Number(document.getElementById("creatorFee").value),
+    creator_wallet: wallet,
+
+    views: 0,
+    likes: 0,
+    trending_score: 0,
+    created_at: new Date().toISOString()
+  };
+
+  project.trust_score = calculateTrustScore(project);
+
+  return project;
+}
+
+/* =========================
+   FORM HANDLER (FUTURE SAFE)
+========================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("launchForm");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const project = buildProject();
+    if (!project) return;
+
+    sessionStorage.setItem("pendingProject", JSON.stringify(project));
+
+    window.location.href = "review.html";
+  });
+});
+</script>
 
 </body>
 </html>

@@ -20,9 +20,7 @@
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 
-  <button onclick="connectWallet()">
-    Connect Wallet
-  </button>
+  <button onclick="connectWallet()">Connect Wallet</button>
 
   <span id="walletDisplay" style="margin-left:10px;">
     Not Connected
@@ -31,7 +29,7 @@
 
 <h1>🚀 Launch Token</h1>
 
-<form onsubmit="reviewLaunch(event)">
+<form id="launchForm">
 
 <label>Token Name</label><br>
 <input id="tokenName" type="text" required><br><br>
@@ -82,13 +80,12 @@
 
 <script>
 /* =========================
-   SAFE SUPABASE INIT
+   SUPABASE INIT (SAFE)
 ========================= */
 
 const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
 
-/* IMPORTANT FIX: correct global usage */
 const supabase = window.supabase
   ? window.supabase.createClient(supabaseUrl, supabaseKey)
   : null;
@@ -102,35 +99,43 @@ function getWallet() {
 }
 
 /* =========================
-   TRUST SCORE (BASE VERSION STEP 1)
+   TRUST SCORE (UPGRADED + FUTURE READY)
 ========================= */
 
-function calculateTrustScore(creatorFee) {
+function calculateTrustScore(project) {
+  let score = 50;
 
-  let score = 100;
+  // fee-based trust
+  if (project.creator_fee == 0) score += 20;
+  else if (project.creator_fee == 1) score += 15;
+  else if (project.creator_fee == 2) score += 10;
 
-  if (creatorFee == 0) score = 100;
-  else if (creatorFee == 1) score = 90;
-  else if (creatorFee == 2) score = 70;
+  // launch type weighting
+  if (project.launch_type === "Safe") score += 15;
+  else if (project.launch_type === "Pro") score += 10;
 
-  return score;
+  // completeness checks
+  if (project.website) score += 5;
+  if (project.twitter) score += 5;
+  if (project.logo) score += 5;
+
+  // scarcity signal
+  if (project.total_supply && project.total_supply < 1000000) score += 10;
+
+  return Math.min(score, 100);
 }
 
 /* =========================
-   REVIEW LAUNCH
+   BUILD PROJECT OBJECT
 ========================= */
 
-window.reviewLaunch = function(e) {
-  e.preventDefault();
-
+function buildProject() {
   const wallet = getWallet();
 
   if (!wallet) {
     alert("Connect wallet first");
-    return;
+    return null;
   }
-
-  const creatorFee = Number(document.getElementById("creatorFee").value);
 
   const project = {
     token_name: document.getElementById("tokenName").value.trim(),
@@ -142,11 +147,8 @@ window.reviewLaunch = function(e) {
     category: document.getElementById("projectCategory").value,
     launch_type: document.getElementById("launchType").value,
     total_supply: Number(document.getElementById("totalSupply").value),
-    creator_fee: creatorFee,
+    creator_fee: Number(document.getElementById("creatorFee").value),
     creator_wallet: wallet,
-
-    /* CORE FIX: trust score must NOT be fake constant */
-    trust_score: calculateTrustScore(creatorFee),
 
     views: 0,
     likes: 0,
@@ -154,11 +156,29 @@ window.reviewLaunch = function(e) {
     created_at: new Date().toISOString()
   };
 
-  /* STEP 1 FLOW: still temporary storage (review step) */
-  sessionStorage.setItem("pendingProject", JSON.stringify(project));
+  project.trust_score = calculateTrustScore(project);
 
-  window.location.href = "review.html";
-};
+  return project;
+}
+
+/* =========================
+   FORM HANDLER (FUTURE SAFE)
+========================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("launchForm");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const project = buildProject();
+    if (!project) return;
+
+    sessionStorage.setItem("pendingProject", JSON.stringify(project));
+
+    window.location.href = "review.html";
+  });
+});
 </script>
 
 </body>

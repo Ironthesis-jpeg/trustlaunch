@@ -7,8 +7,10 @@
 <link rel="stylesheet" href="styles.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+
 <script src="wallet.js"></script>
-<script src="app.js"></script>
+<script src="contract.js"></script>
 </head>
 
 <body>
@@ -27,7 +29,7 @@
 
 <h1>🚀 Review Launch</h1>
 
-<section id="reviewSection">
+<section>
 
   <p><strong>Token Name:</strong> <span id="name"></span></p>
   <p><strong>Symbol:</strong> <span id="symbol"></span></p>
@@ -39,8 +41,13 @@
   <p><strong>Website:</strong> <span id="web"></span></p>
   <p><strong>Twitter:</strong> <span id="tw"></span></p>
   <p><strong>Wallet:</strong> <span id="wallet"></span></p>
-  <p><strong>Trust Score:</strong> <span id="trust"></span></p>
   <p><strong>Date:</strong> <span id="date"></span></p>
+
+  <hr>
+
+  <p><strong>Status:</strong> <span id="status">Waiting</span></p>
+  <p><strong>Tx Hash:</strong> <span id="txhash">-</span></p>
+  <p><strong>Contract Address:</strong> <span id="contract">-</span></p>
 
 </section>
 
@@ -54,28 +61,27 @@
 🚀 Confirm Launch
 </button>
 
-<footer>
-  <p>TrustLaunch</p>
-</footer>
-
 <script>
-/* =========================
-   SUPABASE INIT
-========================= */
-
-const supabaseUrl = "https://uyuokduxqjghmqypheyi.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
-
-const supabaseClient = window.supabase.createClient(
-  supabaseUrl,
-  supabaseKey
-);
 
 /* =========================
-   LOAD PROJECT (SAFE)
+   SUPABASE (FUTURE SAFE)
 ========================= */
 
-const project = JSON.parse(sessionStorage.getItem("pendingProject"));
+const supabaseUrl =
+"https://uyuokduxqjghmqypheyi.supabase.co";
+
+const supabaseKey =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw";
+
+const supabaseClient =
+window.supabase.createClient(supabaseUrl, supabaseKey);
+
+/* =========================
+   LOAD PROJECT
+========================= */
+
+const project =
+JSON.parse(sessionStorage.getItem("pendingProject"));
 
 if (!project) {
   alert("No pending project found.");
@@ -83,22 +89,18 @@ if (!project) {
 }
 
 /* =========================
-   WALLET (SOURCE OF TRUTH = LOCAL STORAGE)
+   WALLET
 ========================= */
 
-function getWallet() {
-  return localStorage.getItem("walletAddress") || "Not Connected";
-}
-
-const walletAddress = getWallet();
+const walletAddress =
+localStorage.getItem("walletAddress") || "Builder Mode";
 
 /* =========================
-   RENDER UI
+   DISPLAY
 ========================= */
 
 function set(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value ?? "";
+  document.getElementById(id).textContent = value;
 }
 
 set("name", project.token_name);
@@ -106,75 +108,106 @@ set("symbol", project.token_symbol);
 set("desc", project.description);
 set("category", project.category);
 set("type", project.launch_type);
-set("supply", Number(project.total_supply || 0).toLocaleString());
-set("fee", (project.creator_fee || 0) + "%");
+set("supply", Number(project.total_supply).toLocaleString());
+set("fee", project.creator_fee + "%");
 set("web", project.website || "N/A");
 set("tw", project.twitter || "N/A");
 set("wallet", walletAddress);
-set("trust", project.trust_score || 0);
-set("date", new Date(project.created_at || Date.now()).toLocaleString());
+set("date", new Date().toLocaleString());
 
 /* =========================
-   CONFIRM LAUNCH (SAFE + FUTURE READY)
+   SAFE CONTRACT EXTRACTION
 ========================= */
 
-const btn = document.getElementById("confirmBtn");
+function extractContract(receipt) {
 
-btn.onclick = async function () {
+  if (!receipt) return null;
 
-  if (!project) return;
+  if (receipt.contractAddress) return receipt.contractAddress;
 
-  this.disabled = true;
-  this.innerText = "Launching...";
+  try {
+    const logs = receipt.logs || [];
+
+    for (const log of logs) {
+      if (log?.args?.projectAddress) {
+        return log.args.projectAddress;
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+/* =========================
+   UPDATE UI STATE
+========================= */
+
+function updateStatus(text) {
+  set("status", text);
+}
+
+/* =========================
+   MAIN FLOW (FUTURE PROOF)
+========================= */
+
+document.getElementById("confirmBtn").onclick = async function () {
+
+  const btn = this;
+  btn.disabled = true;
 
   try {
 
-    /* =========================
-       1. VALIDATION (ANTI-BAD DATA)
-    ========================= */
+    updateStatus("Connecting wallet...");
 
-    if (!project.token_name || !project.token_symbol) {
-      throw new Error("Invalid project data");
-    }
+    const wallet = await TrustLaunchChain.connectWallet();
 
-    if (!walletAddress || walletAddress === "Not Connected") {
-      throw new Error("Wallet not connected");
-    }
+    updateStatus("Deploying on blockchain...");
 
-    /* =========================
-       2. SAVE TO SUPABASE
-    ========================= */
+    const receipt =
+      await TrustLaunchChain.deployProject(project);
+
+    const txHash = receipt.hash;
+
+    const contractAddress =
+      extractContract(receipt);
+
+    set("txhash", txHash);
+    set("contract", contractAddress || "Pending / Not returned");
+
+    updateStatus("Saving to database...");
+
+    const fullProjectData = {
+      ...project,
+
+      creator_wallet: walletAddress,
+
+      tx_hash: txHash,
+      contract_address: contractAddress,
+
+      views: 0,
+      likes: 0,
+      trending_score: 0,
+
+      created_at: new Date().toISOString()
+    };
 
     const { data, error } = await supabaseClient
-      .from("projects")
-      .insert([
-        {
-          ...project,
-          creator_wallet: walletAddress
-        }
-      ])
+      .from("launches")
+      .insert([fullProjectData])
       .select()
       .single();
 
     if (error) throw error;
 
-    /* =========================
-       3. FUTURE HOOK (BLOCKCHAIN READY)
-       - reserved for TrustLaunchFactory
-    ========================= */
-
-    // await deployToContract(data);
-
-    /* =========================
-       4. CLEANUP
-    ========================= */
-
-    sessionStorage.removeItem("pendingProject");
-
+    /* SAVE FOR GLOBAL ACCESS */
     localStorage.setItem(
       "selectedProject",
       JSON.stringify(data)
     );
+
+    sessionStorage.removeItem("pendingProject");
+
+    updateStatus("Launch successful 🚀");
 
     alert("Launch successful 🚀");
 
@@ -184,12 +217,15 @@ btn.onclick = async function () {
 
     console.error(err);
 
+    updateStatus("Launch failed ❌");
+
     alert("Launch failed: " + err.message);
 
-    this.disabled = false;
-    this.innerText = "🚀 Confirm Launch";
+    btn.disabled = false;
+    btn.innerText = "🚀 Confirm Launch";
   }
 };
+
 </script>
 
 </body>

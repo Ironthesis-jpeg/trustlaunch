@@ -1,3 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Review Launch - TrustLaunch</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="wallet.js"></script>
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="launch.html">Launch</a>
+  <a href="explore.html">Explore</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="trending.html">Trending</a>
+
+  <button onclick="connectWallet()">
+    Connect Wallet
+  </button>
+
+  <span id="walletDisplay">
+    Not Connected
+  </span>
+</nav>
+
+<h1>🚀 Review Launch</h1>
+
+<section>
+
+  <p><strong>Token Name:</strong>
+    <span id="name"></span>
+  </p>
+
+  <p><strong>Symbol:</strong>
+    <span id="symbol"></span>
+  </p>
+
+  <p><strong>Description:</strong>
+    <span id="desc"></span>
+  </p>
+
+  <p><strong>Category:</strong>
+    <span id="category"></span>
+  </p>
+
+  <p><strong>Launch Type:</strong>
+    <span id="type"></span>
+  </p>
+
+  <p><strong>Total Supply:</strong>
+    <span id="supply"></span>
+  </p>
+
+  <p><strong>Creator Fee:</strong>
+    <span id="fee"></span>
+  </p>
+
+  <p><strong>Website:</strong>
+    <span id="web"></span>
+  </p>
+
+  <p><strong>Twitter:</strong>
+    <span id="tw"></span>
+  </p>
+
+  <p><strong>Wallet:</strong>
+    <span id="wallet"></span>
+  </p>
+
+  <p><strong>Date:</strong>
+    <span id="date"></span>
+  </p>
+
+</section>
+
+<hr>
+
+<button onclick="window.location.href='launch.html'">
+⬅ Back
+</button>
+
+<button id="confirmBtn">
+🚀 Confirm Launch
+</button>
+
+<footer>
+  <p>TrustLaunch</p>
+</footer>
+
 <script>
 
 /* =========================
@@ -58,12 +152,10 @@ document.getElementById("type").textContent =
 project.launch_type || "";
 
 document.getElementById("supply").textContent =
-Number(
-project.total_supply || 0
-).toLocaleString();
+Number(project.total_supply || 0).toLocaleString();
 
 document.getElementById("fee").textContent =
-project.creator_fee + "%";
+(project.creator_fee || 0) + "%";
 
 document.getElementById("web").textContent =
 project.website || "N/A";
@@ -81,9 +173,8 @@ new Date().toLocaleString();
    CONFIRM LAUNCH
 ========================= */
 
-document.getElementById(
-  "confirmBtn"
-).onclick = async function () {
+document.getElementById("confirmBtn").onclick =
+async function () {
 
   this.disabled = true;
   this.innerText = "Launching...";
@@ -95,50 +186,22 @@ document.getElementById(
       .from("launches")
       .insert([
         {
-          token_name:
-            project.token_name,
-
-          token_symbol:
-            project.token_symbol,
-
-          description:
-            project.description,
-
-          website:
-            project.website,
-
-          twitter:
-            project.twitter,
-
-          logo:
-            project.logo,
-
-          category:
-            project.category,
-
-          launch_type:
-            project.launch_type,
-
-          total_supply:
-            project.total_supply,
-
-          creator_fee:
-            project.creator_fee,
-
-          creator_wallet:
-            walletAddress,
-
-          trust_score:
-            project.trust_score,
-
+          token_name: project.token_name,
+          token_symbol: project.token_symbol,
+          description: project.description,
+          website: project.website,
+          twitter: project.twitter,
+          logo: project.logo,
+          category: project.category,
+          launch_type: project.launch_type,
+          total_supply: project.total_supply,
+          creator_fee: project.creator_fee,
+          creator_wallet: walletAddress,
+          trust_score: project.trust_score,
           views: 0,
-
           likes: 0,
-
           trending_score: 0,
-
-          created_at:
-            new Date().toISOString()
+          created_at: new Date().toISOString()
         }
       ])
       .select()
@@ -155,9 +218,7 @@ document.getElementById(
       "pendingProject"
     );
 
-    alert(
-      "Launch successful 🚀"
-    );
+    alert("Launch successful 🚀");
 
     window.location.href =
       "project.html";
@@ -179,3 +240,6 @@ document.getElementById(
 };
 
 </script>
+
+</body>
+</html>

@@ -20,7 +20,9 @@
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 
-  <button onclick="connectWallet()">Connect Wallet</button>
+  <button onclick="connectWallet()">
+    Connect Wallet
+  </button>
 
   <span id="walletDisplay" style="margin-left:10px;">
     Not Connected
@@ -31,10 +33,12 @@
 
 <section>
 
-  <input id="searchInput"
+  <input
+    id="searchInput"
     type="text"
     placeholder="Search token name or symbol"
-    onkeyup="renderProjects()">
+    onkeyup="renderProjects()"
+  >
 
   <br><br>
 
@@ -43,8 +47,19 @@
   <button onclick="setFilter('Safe')">Safe</button>
   <button onclick="setFilter('Pro')">Pro</button>
 
-  <button onclick="setSort('newest')">Newest</button>
-  <button onclick="setSort('trending')">Trending</button>
+  <br><br>
+
+  <button onclick="setSort('newest')">
+    Newest
+  </button>
+
+  <button onclick="setSort('trust')">
+    Highest Trust
+  </button>
+
+  <button onclick="setSort('trending')">
+    Trending
+  </button>
 
 </section>
 
@@ -52,17 +67,18 @@
 
 <section>
   <div id="projectsContainer">
-    <p>Loading projects...</p>
+    Loading Projects...
   </div>
 </section>
 
 <script>
 
 /* =========================
-   SUPABASE SETUP
+   SUPABASE
 ========================= */
 
-const supabase = window.supabase.createClient(
+const supabase =
+window.supabase.createClient(
   "https://uyuokduxqjghmqypheyi.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dW9rZHV4cWpnaG1xeXBoZXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDgwMDAsImV4cCI6MjA5NjE4NDAwMH0.1RIJxhyo3Nrjn52qtSP3WTJTDqFT9UayRmaBSUwkZVw"
 );
@@ -81,17 +97,31 @@ let currentSort = "newest";
 
 async function loadProjects() {
 
-  const { data, error } = await supabase
-    .from("launches")
-    .select("*");
+  const container =
+    document.getElementById(
+      "projectsContainer"
+    );
+
+  container.innerHTML =
+    "Loading Projects...";
+
+  const { data, error } =
+    await supabase
+      .from("launches")
+      .select("*");
 
   if (error) {
-    document.getElementById("projectsContainer").innerHTML =
-      "<p>Error loading projects</p>";
+
+    console.error(error);
+
+    container.innerHTML =
+      "Failed to load projects";
+
     return;
   }
 
   projects = data || [];
+
   renderProjects();
 }
 
@@ -99,8 +129,10 @@ async function loadProjects() {
    FILTER
 ========================= */
 
-function setFilter(f) {
-  currentFilter = f;
+function setFilter(type) {
+
+  currentFilter = type;
+
   renderProjects();
 }
 
@@ -109,109 +141,223 @@ function setFilter(f) {
 ========================= */
 
 function setSort(type) {
+
   currentSort = type;
+
   renderProjects();
 }
 
 /* =========================
-   SAFE NAVIGATION
+   COMMUNITY SCORE
 ========================= */
 
-function viewProject(project) {
-  localStorage.setItem("selectedProject", JSON.stringify(project));
-  window.location.href = "project.html";
+function getCommunityScore(project) {
+
+  const green =
+    Number(project.green_flags || 0);
+
+  const red =
+    Number(project.red_flags || 0);
+
+  return green - red;
 }
 
 /* =========================
-   RENDER
+   TRENDING SCORE
+========================= */
+
+function getTrendingScore(project) {
+
+  const trust =
+    Number(project.trust_score || 0);
+
+  const green =
+    Number(project.green_flags || 0);
+
+  const red =
+    Number(project.red_flags || 0);
+
+  return trust + (green * 2) - red;
+}
+
+/* =========================
+   VIEW PROJECT
+========================= */
+
+function openProject(project) {
+
+  localStorage.setItem(
+    "selectedProject",
+    JSON.stringify(project)
+  );
+
+  window.location.href =
+    "project.html";
+}
+
+/* =========================
+   RENDER PROJECTS
 ========================= */
 
 function renderProjects() {
 
-  const container = document.getElementById("projectsContainer");
-  const search = document.getElementById("searchInput").value.toLowerCase();
+  const container =
+    document.getElementById(
+      "projectsContainer"
+    );
+
+  const search =
+    document
+      .getElementById(
+        "searchInput"
+      )
+      .value
+      .toLowerCase();
 
   let list = [...projects];
 
-  /* FILTER */
-  list = list.filter(p => {
+  /* SEARCH */
 
-    const name = (p.token_name || "").toLowerCase();
-    const symbol = (p.token_symbol || "").toLowerCase();
+  list = list.filter(project => {
 
-    const matchesSearch =
-      name.includes(search) || symbol.includes(search);
+    const name =
+      (project.token_name || "")
+      .toLowerCase();
 
-    const matchesFilter =
+    const symbol =
+      (project.token_symbol || "")
+      .toLowerCase();
+
+    const searchMatch =
+      name.includes(search) ||
+      symbol.includes(search);
+
+    const filterMatch =
       currentFilter === "All" ||
-      p.launch_type === currentFilter;
+      project.launch_type === currentFilter;
 
-    return matchesSearch && matchesFilter;
+    return searchMatch && filterMatch;
   });
 
   /* SORT */
+
   if (currentSort === "newest") {
+
     list.sort((a, b) =>
-      new Date(b.created_at) - new Date(a.created_at)
+      new Date(b.created_at) -
+      new Date(a.created_at)
+    );
+  }
+
+  if (currentSort === "trust") {
+
+    list.sort((a, b) =>
+      (b.trust_score || 0) -
+      (a.trust_score || 0)
     );
   }
 
   if (currentSort === "trending") {
+
     list.sort((a, b) =>
-      (b.trending_score || 0) - (a.trending_score || 0)
+      getTrendingScore(b) -
+      getTrendingScore(a)
     );
   }
 
-  /* EMPTY STATE */
   if (list.length === 0) {
-    container.innerHTML = "<p>No projects found</p>";
+
+    container.innerHTML =
+      "<p>No projects found</p>";
+
     return;
   }
 
   container.innerHTML = "";
 
-  /* RENDER */
-  list.forEach(p => {
+  list.forEach(project => {
 
-    const score =
-      (p.likes || 0) +
-      (p.views || 0) +
-      (p.trust_score || 0);
+    const community =
+      getCommunityScore(project);
 
-    const encoded = encodeURIComponent(JSON.stringify(p));
+    const trending =
+      getTrendingScore(project);
 
     container.innerHTML += `
+
       <div class="project-card">
 
-        <h3>🚀 ${p.token_name}</h3>
+        <h3>
+          🚀 ${project.token_name}
+        </h3>
 
-        <p><strong>Symbol:</strong> ${p.token_symbol}</p>
-        <p><strong>Type:</strong> ${p.launch_type}</p>
-        <p><strong>Trust:</strong> ${p.trust_score}</p>
-        <p><strong>Likes:</strong> ${p.likes}</p>
-        <p><strong>Views:</strong> ${p.views}</p>
-        <p><strong>Score:</strong> ${score}</p>
+        <p>
+          <strong>Symbol:</strong>
+          ${project.token_symbol}
+        </p>
 
-        <button onclick="openProject('${encoded}')">
+        <p>
+          <strong>Launch:</strong>
+          ${project.launch_type}
+        </p>
+
+        <p>
+          <strong>Trust Score:</strong>
+          ${project.trust_score || 0}
+        </p>
+
+        <p>
+          ✅ Green Flags:
+          ${project.green_flags || 0}
+        </p>
+
+        <p>
+          ❌ Red Flags:
+          ${project.red_flags || 0}
+        </p>
+
+        <p>
+          <strong>Community Score:</strong>
+          ${community}
+        </p>
+
+        <p>
+          <strong>Trending Score:</strong>
+          ${trending}
+        </p>
+
+        <p>
+          <strong>Contract:</strong><br>
+          ${
+            project.contract_address
+            ? project.contract_address
+            : "Not deployed"
+          }
+        </p>
+
+        ${
+          project.contract_address
+          ? "<p>🟢 On-Chain</p>"
+          : "<p>⚪ Pending</p>"
+        }
+
+        <button
+          onclick='openProject(${JSON.stringify(project)})'
+        >
           View Project
         </button>
 
         <hr>
+
       </div>
     `;
   });
 }
 
 /* =========================
-   SAFE PROJECT OPEN
+   INIT
 ========================= */
 
-function openProject(encoded) {
-  const project = JSON.parse(decodeURIComponent(encoded));
-  viewProject(project);
-}
-
-/* INIT */
 loadProjects();
 
 </script>

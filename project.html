@@ -2,14 +2,15 @@
 <html>
 <head>
 
-<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
-<script src="wallet.js"></script>
-
 <meta charset="UTF-8">
 <title>Project Details - TrustLaunch</title>
 
 <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="wallet.js"></script>
 
 </head>
 
@@ -22,9 +23,11 @@
   <a href="wallet.html">Wallet</a>
   <a href="trending.html">Trending</a>
 
-  <button onclick="connectWallet()">Connect Wallet</button>
+  <button onclick="connectWallet()">
+    Connect Wallet
+  </button>
 
-  <span id="walletDisplay" style="margin-left:10px;">
+  <span id="walletDisplay">
     Not Connected
   </span>
 </nav>
@@ -32,25 +35,43 @@
 <h1>🚀 Project</h1>
 
 <section>
+
   <h2 id="title">Loading...</h2>
 
-  <p>Symbol: <span id="symbol"></span></p>
-  <p>Trust: <span id="trust"></span></p>
-  <p>Likes: <span id="likes">0</span></p>
-  <p>Views: <span id="views">0</span></p>
+  <p><strong>Symbol:</strong> <span id="symbol"></span></p>
 
-  <button id="likeBtn">❤️ Like</button>
-</section>
+  <p><strong>Trust Score:</strong>
+    <span id="trust">0</span>
+  </p>
 
-<hr>
+  <p><strong>Green Flags:</strong>
+    <span id="greenFlags">0</span>
+  </p>
 
-<section>
-  <h2>💬 Comments</h2>
+  <p><strong>Red Flags:</strong>
+    <span id="redFlags">0</span>
+  </p>
 
-  <input id="commentInput" placeholder="Write a comment">
-  <button onclick="postComment()">Post</button>
+  <p><strong>Contract:</strong>
+    <span id="contract">N/A</span>
+  </p>
 
-  <div id="comments"></div>
+  <p><strong>Transaction:</strong>
+    <span id="txhash">N/A</span>
+  </p>
+
+  <br>
+
+  <button id="greenBtn">
+    🟢 Green Flag
+  </button>
+
+  <button id="redBtn">
+    🔴 Red Flag
+  </button>
+
+  <p id="voteStatus"></p>
+
 </section>
 
 <script>
@@ -65,24 +86,96 @@ const supabase = window.supabase.createClient(
 );
 
 /* =========================
-   LOAD PROJECT SAFELY
+   PROJECT
 ========================= */
 
-let project = JSON.parse(localStorage.getItem("selectedProject"));
+const savedProject =
+JSON.parse(
+  localStorage.getItem("selectedProject")
+);
 
-if (!project) {
-  document.body.innerHTML = "<h2>No project found</h2>";
+if (!savedProject) {
+
+  document.body.innerHTML =
+  "<h2>No project found</h2>";
+
+  throw new Error("No project");
 }
 
-let currentProject = project;
+let currentProject = savedProject;
 
 /* =========================
-   FETCH LATEST FROM SUPABASE
+   TRUST CALC
+========================= */
+
+function calculateTrust(
+  green,
+  red
+) {
+
+  green = Number(green || 0);
+  red = Number(red || 0);
+
+  const total =
+    green + red;
+
+  if (total === 0) {
+    return 50;
+  }
+
+  return Math.round(
+    (green / total) * 100
+  );
+}
+
+/* =========================
+   RENDER
+========================= */
+
+function renderProject() {
+
+  document.getElementById("title")
+    .textContent =
+    currentProject.token_name || "";
+
+  document.getElementById("symbol")
+    .textContent =
+    currentProject.token_symbol || "";
+
+  document.getElementById("greenFlags")
+    .textContent =
+    currentProject.green_flags || 0;
+
+  document.getElementById("redFlags")
+    .textContent =
+    currentProject.red_flags || 0;
+
+  document.getElementById("contract")
+    .textContent =
+    currentProject.contract_address ||
+    "N/A";
+
+  document.getElementById("txhash")
+    .textContent =
+    currentProject.tx_hash ||
+    "N/A";
+
+  document.getElementById("trust")
+    .textContent =
+    calculateTrust(
+      currentProject.green_flags,
+      currentProject.red_flags
+    );
+}
+
+/* =========================
+   LOAD LATEST PROJECT
 ========================= */
 
 async function loadProject() {
 
-  const { data } = await supabase
+  const { data } =
+  await supabase
     .from("launches")
     .select("*")
     .eq("id", currentProject.id)
@@ -93,135 +186,139 @@ async function loadProject() {
   }
 
   renderProject();
-  trackView();
-  loadComments();
 }
 
 /* =========================
-   VIEW TRACKING (ONCE PER SESSION)
+   FLAG VOTE
 ========================= */
 
-async function trackView() {
+async function submitVote(
+  type
+) {
 
-  const viewKey = "view_" + currentProject.id;
+  const wallet =
+    localStorage.getItem(
+      "walletAddress"
+    );
 
-  if (sessionStorage.getItem(viewKey)) return;
+  if (!wallet) {
 
-  let views = Number(currentProject.views || 0);
-  views++;
+    alert(
+      "Connect wallet first"
+    );
 
-  await supabase
-    .from("launches")
-    .update({ views })
-    .eq("id", currentProject.id);
-
-  currentProject.views = views;
-
-  sessionStorage.setItem(viewKey, "true");
-
-  document.getElementById("views").textContent = views;
-}
-
-/* =========================
-   RENDER PROJECT
-========================= */
-
-function renderProject() {
-
-  document.getElementById("title").textContent =
-    currentProject.token_name;
-
-  document.getElementById("symbol").textContent =
-    currentProject.token_symbol;
-
-  document.getElementById("trust").textContent =
-    currentProject.trust_score;
-
-  document.getElementById("likes").textContent =
-    currentProject.likes || 0;
-
-  document.getElementById("views").textContent =
-    currentProject.views || 0;
-}
-
-/* =========================
-   LIKE BUTTON (REAL DB)
-========================= */
-
-document.getElementById("likeBtn").onclick = async () => {
-
-  let likes = Number(currentProject.likes || 0);
-  likes++;
-
-  currentProject.likes = likes;
-
-  document.getElementById("likes").textContent = likes;
-
-  await supabase
-    .from("launches")
-    .update({ likes })
-    .eq("id", currentProject.id);
-
-};
-
-/* =========================
-   COMMENTS
-========================= */
-
-async function loadComments() {
-
-  const { data } = await supabase
-    .from("comments")
-    .select("*")
-    .eq("project_id", currentProject.id)
-    .order("created_at", { ascending: false });
-
-  renderComments(data || []);
-}
-
-async function postComment() {
-
-  const input = document.getElementById("commentInput");
-  const text = input.value.trim();
-
-  if (!text) return;
-
-  const wallet = localStorage.getItem("walletAddress") || "anon";
-
-  await supabase
-    .from("comments")
-    .insert([{
-      project_id: currentProject.id,
-      wallet,
-      message: text
-    }]);
-
-  input.value = "";
-  loadComments();
-}
-
-function renderComments(comments) {
-
-  const container = document.getElementById("comments");
-  container.innerHTML = "";
-
-  if (!comments.length) {
-    container.innerHTML = "<p>No comments yet</p>";
     return;
   }
 
-  comments.forEach(c => {
+  const status =
+    document.getElementById(
+      "voteStatus"
+    );
 
-    container.innerHTML += `
-      <div style="margin-bottom:10px">
-        <b>${c.wallet}</b>
-        <p>${c.message}</p>
-        <small>${new Date(c.created_at).toLocaleString()}</small>
-        <hr>
-      </div>
-    `;
-  });
+  try {
+
+    const { error: voteError } =
+      await supabase
+      .from("project_flags")
+      .insert([
+        {
+          project_id:
+            currentProject.id,
+
+          wallet:
+            wallet,
+
+          flag_type:
+            type
+        }
+      ]);
+
+    if (voteError) {
+
+      alert(
+        "You already voted on this project"
+      );
+
+      return;
+    }
+
+    let green =
+      Number(
+        currentProject.green_flags || 0
+      );
+
+    let red =
+      Number(
+        currentProject.red_flags || 0
+      );
+
+    if (type === "green") {
+      green++;
+    }
+
+    if (type === "red") {
+      red++;
+    }
+
+    const trust =
+      calculateTrust(
+        green,
+        red
+      );
+
+    const { error } =
+      await supabase
+      .from("launches")
+      .update({
+        green_flags: green,
+        red_flags: red,
+        trust_score: trust
+      })
+      .eq(
+        "id",
+        currentProject.id
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    currentProject.green_flags =
+      green;
+
+    currentProject.red_flags =
+      red;
+
+    currentProject.trust_score =
+      trust;
+
+    renderProject();
+
+    status.textContent =
+      "Vote recorded";
+
+  } catch (err) {
+
+    console.error(err);
+
+    status.textContent =
+      "Vote failed";
+  }
 }
+
+/* =========================
+   BUTTONS
+========================= */
+
+document
+.getElementById("greenBtn")
+.onclick = () =>
+submitVote("green");
+
+document
+.getElementById("redBtn")
+.onclick = () =>
+submitVote("red");
 
 /* =========================
    INIT

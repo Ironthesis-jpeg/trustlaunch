@@ -32,35 +32,111 @@
   </span>
 </nav>
 
-<h1>🚀 Project</h1>
+<h1>🚀 Project Details</h1>
 
-<section>
+<section class="project-card">
 
   <h2 id="title">Loading...</h2>
 
-  <p><strong>Symbol:</strong> <span id="symbol"></span></p>
+  <p>
+    <strong>Symbol:</strong>
+    <span id="symbol"></span>
+  </p>
 
-  <p><strong>Trust Score:</strong>
+  <p>
+    <strong>Launch Type:</strong>
+    <span id="launchType"></span>
+  </p>
+
+  <p>
+    <strong>Category:</strong>
+    <span id="category"></span>
+  </p>
+
+  <p>
+    <strong>Trust Score:</strong>
     <span id="trust">0</span>
   </p>
 
-  <p><strong>Green Flags:</strong>
+  <p>
+    <strong>Green Flags:</strong>
     <span id="greenFlags">0</span>
   </p>
 
-  <p><strong>Red Flags:</strong>
+  <p>
+    <strong>Red Flags:</strong>
     <span id="redFlags">0</span>
   </p>
 
-  <p><strong>Contract:</strong>
+  <p>
+    <strong>Community Score:</strong>
+    <span id="communityScore">0</span>
+  </p>
+
+  <p>
+    <strong>Status:</strong>
+    <span id="chainStatus">Pending</span>
+  </p>
+
+  <p>
+    <strong>Contract:</strong>
     <span id="contract">N/A</span>
   </p>
 
-  <p><strong>Transaction:</strong>
+  <p>
+    <strong>Transaction:</strong>
     <span id="txhash">N/A</span>
   </p>
 
-  <br>
+  <p>
+    <strong>Creator:</strong>
+    <span id="creatorWallet">N/A</span>
+  </p>
+
+  <hr>
+
+  <p>
+    <strong>Description</strong>
+  </p>
+
+  <p id="description">
+    No description available
+  </p>
+
+  <hr>
+
+  <p>
+    <strong>Website</strong>
+  </p>
+
+  <p id="website">N/A</p>
+
+  <p>
+    <strong>Twitter</strong>
+  </p>
+
+  <p id="twitter">N/A</p>
+
+  <hr>
+
+  <h3>Future Analytics</h3>
+
+  <p>
+    <strong>Market Cap:</strong>
+    <span id="marketCap">Coming Soon</span>
+  </p>
+
+  <p>
+    <strong>Liquidity:</strong>
+    <span id="liquidity">Coming Soon</span>
+  </p>
+
+  <p>
+    <strong>Holders:</strong>
+    <span id="holders">Coming Soon</span>
+  </p>
+
+  <hr>
 
   <button id="greenBtn">
     🟢 Green Flag
@@ -86,7 +162,7 @@ const supabase = window.supabase.createClient(
 );
 
 /* =========================
-   PROJECT
+   LOAD PROJECT
 ========================= */
 
 const savedProject =
@@ -99,13 +175,14 @@ if (!savedProject) {
   document.body.innerHTML =
   "<h2>No project found</h2>";
 
-  throw new Error("No project");
+  throw new Error("No project found");
 }
 
-let currentProject = savedProject;
+let currentProject =
+savedProject;
 
 /* =========================
-   TRUST CALC
+   TRUST SCORE
 ========================= */
 
 function calculateTrust(
@@ -129,47 +206,157 @@ function calculateTrust(
 }
 
 /* =========================
+   COMMUNITY SCORE
+========================= */
+
+function communityScore() {
+
+  return (
+    Number(
+      currentProject.green_flags || 0
+    ) -
+    Number(
+      currentProject.red_flags || 0
+    )
+  );
+}
+
+/* =========================
    RENDER
 ========================= */
 
 function renderProject() {
 
   document.getElementById("title")
-    .textContent =
-    currentProject.token_name || "";
+  .textContent =
+  currentProject.token_name || "";
 
   document.getElementById("symbol")
-    .textContent =
-    currentProject.token_symbol || "";
+  .textContent =
+  currentProject.token_symbol || "";
+
+  document.getElementById("launchType")
+  .textContent =
+  currentProject.launch_type || "";
+
+  document.getElementById("category")
+  .textContent =
+  currentProject.category || "";
 
   document.getElementById("greenFlags")
-    .textContent =
-    currentProject.green_flags || 0;
+  .textContent =
+  currentProject.green_flags || 0;
 
   document.getElementById("redFlags")
-    .textContent =
-    currentProject.red_flags || 0;
+  .textContent =
+  currentProject.red_flags || 0;
 
-  document.getElementById("contract")
-    .textContent =
-    currentProject.contract_address ||
-    "N/A";
-
-  document.getElementById("txhash")
-    .textContent =
-    currentProject.tx_hash ||
-    "N/A";
+  document.getElementById("communityScore")
+  .textContent =
+  communityScore();
 
   document.getElementById("trust")
-    .textContent =
-    calculateTrust(
-      currentProject.green_flags,
-      currentProject.red_flags
-    );
+  .textContent =
+  calculateTrust(
+    currentProject.green_flags,
+    currentProject.red_flags
+  );
+
+  document.getElementById("description")
+  .textContent =
+  currentProject.description ||
+  "No description";
+
+  document.getElementById("creatorWallet")
+  .textContent =
+  currentProject.creator_wallet ||
+  "Unknown";
+
+  /* WEBSITE */
+
+  const website =
+  document.getElementById("website");
+
+  if (currentProject.website) {
+
+    website.innerHTML =
+    `<a href="${currentProject.website}"
+      target="_blank">
+      ${currentProject.website}
+    </a>`;
+
+  } else {
+
+    website.textContent = "N/A";
+  }
+
+  /* TWITTER */
+
+  const twitter =
+  document.getElementById("twitter");
+
+  if (currentProject.twitter) {
+
+    twitter.innerHTML =
+    `<a href="${currentProject.twitter}"
+      target="_blank">
+      ${currentProject.twitter}
+    </a>`;
+
+  } else {
+
+    twitter.textContent = "N/A";
+  }
+
+  /* CONTRACT */
+
+  const contract =
+  document.getElementById("contract");
+
+  if (currentProject.contract_address) {
+
+    contract.innerHTML =
+    `<a
+      target="_blank"
+      href="https://basescan.org/address/${currentProject.contract_address}">
+      ${currentProject.contract_address}
+    </a>`;
+
+  } else {
+
+    contract.textContent = "N/A";
+  }
+
+  /* TX HASH */
+
+  const txhash =
+  document.getElementById("txhash");
+
+  if (currentProject.tx_hash) {
+
+    txhash.innerHTML =
+    `<a
+      target="_blank"
+      href="https://basescan.org/tx/${currentProject.tx_hash}">
+      View Transaction
+    </a>`;
+
+  } else {
+
+    txhash.textContent = "N/A";
+  }
+
+  /* STATUS */
+
+  document.getElementById("chainStatus")
+  .textContent =
+  currentProject.contract_address
+  ? "🟢 On Chain"
+  : "⚪ Pending";
 }
 
 /* =========================
-   LOAD LATEST PROJECT
+   LOAD LATEST
 ========================= */
 
 async function loadProject() {
@@ -178,28 +365,35 @@ async function loadProject() {
   await supabase
     .from("launches")
     .select("*")
-    .eq("id", currentProject.id)
+    .eq(
+      "id",
+      currentProject.id
+    )
     .single();
 
   if (data) {
+
     currentProject = data;
+
+    localStorage.setItem(
+      "selectedProject",
+      JSON.stringify(data)
+    );
   }
 
   renderProject();
 }
 
 /* =========================
-   FLAG VOTE
+   SUBMIT VOTE
 ========================= */
 
-async function submitVote(
-  type
-) {
+async function submitVote(type) {
 
   const wallet =
-    localStorage.getItem(
-      "walletAddress"
-    );
+  localStorage.getItem(
+    "walletAddress"
+  );
 
   if (!wallet) {
 
@@ -211,46 +405,45 @@ async function submitVote(
   }
 
   const status =
-    document.getElementById(
-      "voteStatus"
-    );
+  document.getElementById(
+    "voteStatus"
+  );
 
   try {
 
     const { error: voteError } =
-      await supabase
-      .from("project_flags")
-      .insert([
-        {
-          project_id:
-            currentProject.id,
+    await supabase
+    .from("project_flags")
+    .insert([
+      {
+        project_id:
+        currentProject.id,
 
-          wallet:
-            wallet,
+        wallet:
+        wallet,
 
-          flag_type:
-            type
-        }
-      ]);
+        flag_type:
+        type
+      }
+    ]);
 
     if (voteError) {
 
-      alert(
-        "You already voted on this project"
-      );
+      status.textContent =
+      "You already voted";
 
       return;
     }
 
     let green =
-      Number(
-        currentProject.green_flags || 0
-      );
+    Number(
+      currentProject.green_flags || 0
+    );
 
     let red =
-      Number(
-        currentProject.red_flags || 0
-      );
+    Number(
+      currentProject.red_flags || 0
+    );
 
     if (type === "green") {
       green++;
@@ -261,48 +454,55 @@ async function submitVote(
     }
 
     const trust =
-      calculateTrust(
-        green,
-        red
-      );
+    calculateTrust(
+      green,
+      red
+    );
 
     const { error } =
-      await supabase
-      .from("launches")
-      .update({
-        green_flags: green,
-        red_flags: red,
-        trust_score: trust
-      })
-      .eq(
-        "id",
-        currentProject.id
-      );
+    await supabase
+    .from("launches")
+    .update({
+      green_flags: green,
+      red_flags: red,
+      trust_score: trust
+    })
+    .eq(
+      "id",
+      currentProject.id
+    );
 
     if (error) {
       throw error;
     }
 
     currentProject.green_flags =
-      green;
+    green;
 
     currentProject.red_flags =
-      red;
+    red;
 
     currentProject.trust_score =
-      trust;
+    trust;
+
+    localStorage.setItem(
+      "selectedProject",
+      JSON.stringify(
+        currentProject
+      )
+    );
 
     renderProject();
 
     status.textContent =
-      "Vote recorded";
+    "Vote recorded successfully";
 
   } catch (err) {
 
     console.error(err);
 
     status.textContent =
-      "Vote failed";
+    "Vote failed";
   }
 }
 
